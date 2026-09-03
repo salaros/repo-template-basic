@@ -3,6 +3,17 @@
 # This script is executed after a successful merge in Git. 
 # It checks for changes in specific files and runs corresponding commands to update dependencies or perform other necessary actions.
 
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
+
+# Change to the root of the Git repository to ensure that commands are run in the correct context
+cd "$(dirname "${GIT_DIR:-$(git rev-parse --git-dir)}")" || exit 1
+
 # Get the list of changed files between the previous commit (ORIG_HEAD) and the current commit (HEAD)
 changed=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD)
 
