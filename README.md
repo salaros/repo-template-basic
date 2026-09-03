@@ -1,3 +1,4 @@
 # Basic repo template
 
-No language, just .gitignore, .gitattributes, Git hooks etc.
+This repo was not designed for any particular programming language or framework.
+It contains just .gitignore, .gitattributes, Git hooks etc.
