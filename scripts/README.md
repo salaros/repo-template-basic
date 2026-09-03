@@ -1,0 +1,28 @@
+## Scripts
+
+Automation scripts for working with this repository. They are run by
+developers and CI, not by the application itself, and are never shipped as
+part of the product.
+
+### What belongs here
+
+- **Setup** — bootstrap a fresh clone (install dependencies, git hooks,
+  local configuration).
+- **Build and release** — compile, package, version, publish.
+- **Maintenance** — clean caches, regenerate code or docs, migrate data.
+- **CI helpers** — steps invoked from pipeline definitions, kept here so
+  they can also be run locally.
+
+### Conventions
+
+- One task per script, named after what it does (`setup-hooks.sh`,
+  `build.sh`, `release.sh`).
+- Scripts are safe to run from any working directory — each resolves the
+  repository root from its own location.
+- Every script starts with a short comment describing what it does and how
+  to call it; scripts that take arguments print usage when run with `-h`.
+- Prefer POSIX `sh` (or the project's primary language) so scripts run the
+  same on Linux, macOS, and Git for Windows.
+- Scripts must be idempotent where possible — running them twice should not
+  break anything.
+  
