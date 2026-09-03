@@ -62,3 +62,19 @@ if needs_install yarn.lock; then
     echo "yarn dependencies changed. Running yarn install..."
     yarn install
 fi
+
+# Check if NuGet dependencies have changed by looking for changes
+# in project files that reference packages
+nuget_changed() {
+    # Any added/removed line in project/props files that touches a package reference
+    git diff ORIG_HEAD HEAD -- \
+    '*.csproj' '*.fsproj' '*.vbproj' '*.props' '*.targets' \
+    | grep -qE '^[+-][^+-].*<(PackageReference|PackageVersion|GlobalPackageReference|PackageDownload)\b'
+}
+
+# Check if NuGet dependencies have changed or if specific NuGet-related
+# files have changed and run dotnet restore
+if nuget_changed || file_changed 'packages\.lock\.json' || file_changed 'nuget\.config' || file_changed 'global\.json'; then
+    echo "NuGet dependencies changed. Running dotnet restore..."
+    dotnet restore
+fi
