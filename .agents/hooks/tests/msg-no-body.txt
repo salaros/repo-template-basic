@@ -1,0 +1,1 @@
+feat(hooks): reject a commit that carries no body at all

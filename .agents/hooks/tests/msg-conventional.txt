@@ -1,3 +1,4 @@
-feat(hooks): check commit messages
+feat(hooks): check the shape of every commit message
 
-The git-commit skill writes them; this holds them to the rule.
+The git-commit skill writes them; this holds whatever wrote them to the
+same rule, agent or human.

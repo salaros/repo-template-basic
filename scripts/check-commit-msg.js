@@ -16,6 +16,12 @@ const lib = require("./lib");
 const TYPES = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"];
 const HEADER = new RegExp(`^(${TYPES.join("|")})(\\([^()\\s][^()]*\\))?(!)?: (.+)$`);
 const MAX = 72;
+// "fixing bugs" and "implemented some stuff" tell a reader nothing, so a description is at least
+// four words, and every commit carries a body saying why. Git's own trailers are metadata rather
+// than explanation, so they do not count towards it.
+const MIN_WORDS = 4;
+const MIN_BODY = 20;
+const TRAILER = /^(?:BREAKING[ -]CHANGE:|[A-Za-z][A-Za-z-]*:\s)/;
 // Git writes these itself, so holding them to the rule would block a merge or a rebase.
 const GENERATED = /^(?:Merge |Revert "|fixup! |squash! |amend! )/;
 
@@ -50,16 +56,40 @@ if (!m) {
     problems.push(`the subject is not a conventional commit: "${header}"\n` +
         `  expected <type>(<scope>)?!?: <description>, type one of ${TYPES.join(", ")}\n` +
         `  for example: feat(hooks): check commit messages`);
-} else if (m[4].endsWith(".")) {
-    problems.push(`the subject ends with a full stop: "${header}"`);
+} else {
+    if (m[4].endsWith(".")) problems.push(`the subject ends with a full stop: "${header}"`);
+    const words = m[4].trim().split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w));
+    if (words.length < MIN_WORDS) {
+        problems.push(`the description is ${words.length} word(s): "${m[4]}"\n` +
+            `  say what changed, specifically enough that the subject alone is useful in a log:\n` +
+            `  not "fixing bugs" or "implemented some stuff", but "reject a subject with no real description"`);
+    }
 }
 if (header.length > MAX) problems.push(`the subject is ${header.length} characters, over the ${MAX} allowed`);
 if (body.length > 1 && body[1].trim() !== "") problems.push(`line 2 must be blank, separating subject from body: "${body[1]}"`);
 
+// The body must explain the change. Trailers are metadata, not explanation, so a message whose only
+// body is "Refs: AB-42" has none; they are stripped from the end, where Git's convention puts them.
+const rest = body.slice(1);
+const trailers = [];
+while (rest.length && (rest[rest.length - 1].trim() === "" || TRAILER.test(rest[rest.length - 1]))) {
+    const line = rest.pop();
+    if (TRAILER.test(line)) trailers.unshift(line);
+}
+const prose = rest.join("\n").trim();
+if (prose.length < MIN_BODY) {
+    problems.push(`there is no description: the subject explains what, the body explains why\n` +
+        `  leave a blank line after the subject, then write at least ${MIN_BODY} characters of it` +
+        (prose.length ? ` (found ${prose.length})` : ""));
+}
+
 // A warning, not a rule: it is printed either way and never changes the exit code.
+// The key counts only where it means "this commit is that work": the subject, or a trailer. A key
+// named in passing in the body is prose about a ticket, not a reference to one, and a message that
+// merely quotes an example would otherwise read as compliant.
 const key = projectKey();
 const issue = key ? new RegExp(`\\b${key}-\\d+\\b`) : /\b[A-Z][A-Z0-9]+-\d+\b/;
-if (!issue.test(body.join("\n"))) {
+if (!issue.test(header) && !trailers.some(t => issue.test(t))) {
     const example = `${key || "PROJ"}-123`;
     console.error(`commit message: no issue key (${example}). Add one so the change can be traced to its ticket, ` +
         `in the subject or as a trailing "Refs: ${example}" line.`);
