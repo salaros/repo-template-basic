@@ -625,3 +625,6 @@ typings
 # System files
 .DS_Store
 Thumbs.db
+
+# Ignore the store folder for tools, which is used to cache downloaded dependencies
+tools/.store
