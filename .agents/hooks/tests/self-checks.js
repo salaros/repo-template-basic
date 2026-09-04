@@ -146,11 +146,24 @@ function sessionStartFollowsProjectDir(t, env) {
         "session-start.js follows CLAUDE_PROJECT_DIR", r.output);
 }
 
+// tools/docs-site reads the stage table through docs-check's readChain(), so a change to that
+// parser can break the portal without any docs-check test noticing. Running its chain module end to
+// end catches it, and needs no Astro install: chain.mjs prints one line per stage, in order.
+function docsSiteReadsTheChainInOrder(t) {
+    const r = lib.node(["tools/docs-site/chain.mjs"]);
+    t.ok(r.status === 0, "tools/docs-site/chain.mjs runs", r.output);
+    if (r.status !== 0) return;
+    const order = ["BRD", "PRD", "EARS", "BDD", "ADR", "SPEC"].map(s => r.output.indexOf(`${s}\t`));
+    t.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])),
+        "docs-site reads the stages in pipeline order", r.output);
+}
+
 module.exports = [
     rosterIsConsistent,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,
     docsCheckSourceAndAdrExemption,
     docsCheckMemoryRequirements,
+    docsSiteReadsTheChainInOrder,
     sessionStartFollowsProjectDir,
 ];

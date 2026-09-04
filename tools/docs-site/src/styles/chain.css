@@ -1,0 +1,27 @@
+/* Portal styling. Only two things need help: the pipeline table on the overview page, and the
+   document IDs the chain is built from, which should read as identifiers rather than prose. */
+
+/* Every stage row on the overview page keeps its columns narrow enough to scan. */
+.sl-markdown-content table {
+    display: table;
+    width: 100%;
+}
+
+.sl-markdown-content table code {
+    white-space: nowrap;
+}
+
+/* "Derived from:" is the provenance line every document carries; give it a rule of its own so a
+   reader can find where the document came from without reading the first paragraph. */
+.sl-markdown-content p:has(> strong:first-child:is(:only-child)) {
+    border-inline-start: 2px solid var(--sl-color-gray-5);
+    padding-inline-start: 0.75rem;
+    color: var(--sl-color-gray-2);
+}
+
+/* An item ID (BR-2, FR-3, AC-1) is a link target; mark the one the reader jumped to. */
+.sl-markdown-content [id]:target,
+.sl-markdown-content li:has(> span[id]:target) {
+    background: var(--sl-color-accent-low);
+    scroll-margin-top: 6rem;
+}

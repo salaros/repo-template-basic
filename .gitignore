@@ -614,6 +614,10 @@ Vagrantfile
 .settings/
 *.sublime-workspace
 
+# Cloudflare
+.wrangler
+!.wrangler/deploy/config.json
+
 # misc
 connect.lock
 typings
@@ -621,3 +625,8 @@ typings
 # System files
 .DS_Store
 Thumbs.db
+
+## Documentation portal (tools/docs-site): build output. It reads docs/ live, so there is no
+## generated content to ignore.
+tools/docs-site/dist/
+tools/docs-site/.astro/

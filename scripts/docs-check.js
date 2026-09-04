@@ -12,7 +12,8 @@
 // stands in for an upstream document only while the chain holds nothing earlier; an ADR may
 // always cite one, and is exempt from the backwards-only rule in both directions. MEMORY.md's
 // Requirements line follows the same reference rule, or says "none yet".
-// Prints one line per problem and exits 1 when there are any. The edit hook requires check().
+// Prints one line per problem and exits 1 when there are any. The edit hook requires check();
+// tools/docs-site requires readChain(), so the stage table is parsed in one place, not two.
 // Usage: node scripts/docs-check.js [docs-dir] [agents-file] [memory-file]
 //        (defaults: docs, AGENTS.md, MEMORY.md)
 const fs = require("fs");
@@ -33,37 +34,50 @@ const referenceTokens = line => line.replace(/^\**Derived from:?\**:?/i, "")
     .map(t => t.replace(/^[("'<[]+|[)"'>\].]+$/g, ""))
     .filter(Boolean);
 
+// The chain itself, read from the AGENTS.md table: | Stage | Answers | Lives in | Skill |. Every
+// row in table order, so the caller sees the pipeline the way a reader of AGENTS.md does; `folder`
+// is set only on the rows that are document stages (tests/, .scratch/ and src/ have none). This is
+// the only parser of that table: check() below and tools/docs-site both go through it.
+function readChain(agentsFile = "AGENTS.md") {
+    lib.chdirRoot();
+    const problems = [];
+    const say = msg => problems.push(`${agentsFile}: ${msg}`);
+    const stages = [];
+    const text = fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, "utf8") : "";
+    const lines = text.split(/\r?\n/);
+    const cells = l => l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+    const header = lines.findIndex(l => /^\|/.test(l) && cells(l).includes("Stage") && cells(l).includes("Lives in"));
+    if (header < 0) {
+        say("no chain table found (a Markdown table with Stage and Lives in columns)");
+        return { stages, problems };
+    }
+    const cols = cells(lines[header]);
+    const at = (row, name) => row[cols.indexOf(name)] || "";
+    for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i++) {
+        const row = cells(lines[i]);
+        const stage = at(row, "Stage");
+        const lives = (at(row, "Lives in").match(/`([^`]+)`/) || [])[1] || "";
+        const skills = [...at(row, "Skill").matchAll(/`([^`]+)`/g)].map(m => m[1]);
+        for (const skill of skills)
+            if (!fs.existsSync(path.join(".agents/skills", skill, "SKILL.md")))
+                say(`stage ${stage} names skill \`${skill}\`, which is not under .agents/skills/`);
+        const m = lives.match(/^docs\/([a-z0-9-]+)\/$/);   // tests/, .scratch/, src/: not a document stage
+        if (m && m[1].toUpperCase() !== stage) say(`stage ${stage} lives in ${lives}; the folder must be docs/${stage.toLowerCase()}/`);
+        stages.push({ stage, answers: at(row, "Answers"), lives, folder: m ? m[1] : null, skills });
+    }
+    if (!stages.some(s => s.folder)) say("chain table has no row living in docs/<stage>/");
+    return { stages, problems };
+}
+
 function check(root = "docs", agentsFile = "AGENTS.md", memoryFile = "MEMORY.md") {
     lib.chdirRoot();
     const problems = [];
     const say = (file, msg) => problems.push(`${file}: ${msg}`);
 
-    // 1. The chain, from the AGENTS.md table: | Stage | ... | Lives in | Skill |
-    const chain = [];            // folder names in stage order, e.g. ["brd", "prd", ...]
-    {
-        const text = fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, "utf8") : "";
-        const lines = text.split(/\r?\n/);
-        const cells = l => l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
-        const header = lines.findIndex(l => /^\|/.test(l) && cells(l).includes("Stage") && cells(l).includes("Lives in"));
-        if (header < 0) say(agentsFile, "no chain table found (a Markdown table with Stage and Lives in columns)");
-        else {
-            const cols = cells(lines[header]);
-            const at = (row, name) => row[cols.indexOf(name)] || "";
-            for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i++) {
-                const row = cells(lines[i]);
-                const stage = at(row, "Stage");
-                const lives = (at(row, "Lives in").match(/`([^`]+)`/) || [])[1] || "";
-                for (const skill of at(row, "Skill").matchAll(/`([^`]+)`/g))
-                    if (!fs.existsSync(path.join(".agents/skills", skill[1], "SKILL.md")))
-                        say(agentsFile, `stage ${stage} names skill \`${skill[1]}\`, which is not under .agents/skills/`);
-                const m = lives.match(/^docs\/([a-z0-9-]+)\/$/);
-                if (!m) continue;                                   // tests/, .scratch/, src/: not a document stage
-                if (m[1].toUpperCase() !== stage) say(agentsFile, `stage ${stage} lives in ${lives}; the folder must be docs/${stage.toLowerCase()}/`);
-                chain.push(m[1]);
-            }
-            if (!chain.length) say(agentsFile, "chain table has no row living in docs/<stage>/");
-        }
-    }
+    // 1. The chain, from the AGENTS.md table
+    const fromTable = readChain(agentsFile);
+    problems.push(...fromTable.problems);
+    const chain = fromTable.stages.filter(s => s.folder).map(s => s.folder);   // folder names in stage order
     const rank = Object.fromEntries(chain.map((s, i) => [s, i]));
     const prefixes = chain.map(s => s.toUpperCase());
     const refRe = new RegExp(`\\b(${prefixes.join("|") || "NONE"})-(\\d{4})(?:\\/([A-Z]{1,5}-\\d+))?\\b`, "g");
@@ -153,7 +167,7 @@ function check(root = "docs", agentsFile = "AGENTS.md", memoryFile = "MEMORY.md"
     return { problems, summary: `docs-check: ${chain.length} stage(s) in ${agentsFile}, ${docs.size} document(s) under ${root}/, no problems` };
 }
 
-module.exports = { check };
+module.exports = { check, readChain };
 
 if (require.main === module) {
     const { problems, summary } = check(...process.argv.slice(2));

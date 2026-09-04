@@ -47,3 +47,7 @@ Contains: goals and non-goals citing the EARS and BDD documents, the architectur
 ## After the documents
 
 Tests (`tests/`), the implementation plan (`.scratch/`, published to Jira by `to-tickets`) and code (`src/`) are the remaining stages; they are not documents and the validator does not read them.
+
+## Browsing them
+
+These files are readable as they are, but `tools/docs-site` renders them as a portal: the stages in pipeline order, and every citation a link that opens the document it names at the item it names. Run `npm --prefix tools/docs-site run dev` after `npm --prefix tools/docs-site install`. It reads these files live, copying nothing and writing nothing back; `tools/docs-site/README.md` has the details.

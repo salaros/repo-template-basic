@@ -1,0 +1,15 @@
+{
+  "name": "docs-site",
+  "private": true,
+  "description": "Astro Starlight portal that reads the documentation chain live from docs/. See README.md.",
+  "scripts": {
+    "chain": "node chain.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.0",
+    "astro": "^7.3.1"
+  }
+}
