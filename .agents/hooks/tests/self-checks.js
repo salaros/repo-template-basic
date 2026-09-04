@@ -10,10 +10,12 @@ const path = require("path");
 const lib = require("../lib");
 const docsCheck = require("../../../scripts/docs-check");
 
-// The skill roster must be consistent: every skill routed by an agent, README's table current.
-function rosterIsConsistent(t) {
-    const r = lib.node(["scripts/skills.js", "check"]);
-    t.ok(r.status === 0, "node scripts/skills.js check", r.output);
+// The lock file and .agents/skills must agree. This is breakage, not bookkeeping: a skill recorded
+// in the lock but absent from disk means a damaged or partial checkout, and `skills.js install`
+// fixes it. Nothing here requires a project to route, document or tabulate the skills it installs.
+function noSkillIsMissingFromDisk(t) {
+    const r = lib.node(["scripts/skills.js", "missing"]);
+    t.ok(r.status === 0, "node scripts/skills.js missing", r.output);
 }
 
 // docs-check's citation logic, exercised directly against a throwaway doc tree (real stage folder
@@ -177,7 +179,7 @@ function docsSiteRendersTheChain(t) {
 }
 
 module.exports = [
-    rosterIsConsistent,
+    noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,
     docsCheckSourceAndAdrExemption,

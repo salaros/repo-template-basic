@@ -4,8 +4,8 @@
 // whatever the harness sent) and applies the first matching rule below that objects: a refusal
 // when a vendored skill was edited in place, node --check for *.js, JSON validity for *.json, the
 // documentation chain for Markdown under docs/ and for AGENTS.md (whose table defines the chain),
-// the skill roster (scripts/skills.js check) when the lock, an agent, a local skill or README
-// changed, and the hook test suite when the harness itself changed.
+// and the hook test suite when the harness itself changed. Each rule catches something broken; none
+// of them asks a project to keep bookkeeping current.
 // Exit 2 = send the message on stderr back to the agent. Exit 0 = silent.
 // Wire it to the post-tool-use event of the edit/write tools (README, "Files per AI tool").
 const fs = require("fs");
@@ -29,10 +29,6 @@ const rules = [
     {   // The chain: any Markdown under docs/, and the AGENTS.md table the validator reads the stages from.
         when: /^(?:AGENTS\.md|docs\/.*\.md)$/,
         check: () => { const r = docsCheck.check(); return r.problems.length > 0 && `documentation chain check failed (see AGENTS.md, Documentation; fix with the docs-check skill):\n${r.problems.join("\n")}`; },
-    },
-    {   // The skill roster: the lock, an agent's route table, a local skill or README's generated table changed.
-        when: /^(?:skills-lock\.json|\.agents\/agents\/[^/]+\.md|\.agents\/skills\/[^/]+\/SKILL\.md|README\.md)$/,
-        check: () => { const r = lib.node(["scripts/skills.js", "check"]); return r.status !== 0 && `skills check failed (fix the cause, or run: node scripts/skills.js write):\n${r.output}`; },
     },
     {   // The harness itself changed: the suite must still pass (HOOK_TEST stops recursion).
         when: /^(?:\.agents\/hooks\/|\.githooks\/|scripts\/(?:on-manifest-change|docs-check|skills)\.js$|scripts\/stacks\.tsv$)/,

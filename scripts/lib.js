@@ -6,7 +6,7 @@
 //   const lib = require("./lib");
 //   const root = lib.chdirRoot();            // cd to the repo root (this file is one level under it), return it
 //   lib.stdin()                              // everything on stdin, or "" if there is none
-//   lib.node(["scripts/skills.js", "check"]) // run a script with this node; { status, output }
+//   lib.node(["scripts/skills.js", "missing"]) // run a script with this node; { status, output }
 //   lib.shell("npm install")                 // run a command through the OS shell
 //   lib.readTsv("scripts/stacks.tsv")        // rows as arrays of cells; blank and # lines skipped
 const fs = require("fs");

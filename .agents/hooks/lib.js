@@ -8,7 +8,7 @@
 //   const payload = lib.payload();           // stdin parsed as JSON, or null (warned on stderr)
 //   const files = lib.filePaths(payload, root); // edited file(s), repo-relative, forward slashes
 //   const cmd = lib.commandText(payload)     // the shell command text, or "" if the shape is unknown
-//   lib.node(["scripts/skills.js", "check"]) // run a script with this node; { status, output }
+//   lib.node(["scripts/skills.js", "missing"]) // run a script with this node; { status, output }
 //   lib.readTsv("scripts/stacks.tsv")        // rows as arrays of cells; blank and # lines skipped
 // Root: CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR or GEMINI_PROJECT_DIR when set, else the checkout
 // these hooks live in; a variable naming another checkout is used and reported on stderr.
