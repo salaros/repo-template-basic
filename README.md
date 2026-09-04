@@ -48,6 +48,7 @@ node scripts/skills.js relink                                      # after any o
 - `node scripts/skills.js install` restores `.agents/skills` from the lock file. A normal clone never needs it; the post-merge Git hook runs it when the lock changes.
 - Do not edit a vendored skill in place; the next update overwrites it. Fork it under another name outside `.agents/skills`, or change it upstream.
 - Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own; **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name`.
+- The lock file records only a hash per skill, so an upstream repo going private or rewriting history is otherwise invisible. Run `npx skills update` every so often (monthly, or before a stretch of work that leans on skills), then `node .agents/hooks/test.js` to catch a skill an update broke, and review the diff before committing. The current upstreams are `anthropics/skills`, `diskd-ai/design-doc`, `github/awesome-copilot`, `jeffallan/claude-skills`, `mattpocock/skills`, `thebushidocollective/han`, `vercel-labs/agent-browser`, `vercel-labs/agent-skills`, `vercel-labs/skills` and `wshobson/agents`.
 
 The table below is generated from the lock file, each skill's frontmatter and the agents' route tables by `node scripts/skills.js write`; `node scripts/skills.js check`, which the edit hook runs when any of those change, fails when the table is stale or a skill is routed by no agent.
 

@@ -8,7 +8,7 @@
 //   --dry-run  print "would run: <command>" per matching row instead of running it
 const fs = require("fs");
 const path = require("path");
-const lib = require("../.agents/hooks/lib");
+const lib = require("./lib");
 
 process.chdir(path.resolve(__dirname, ".."));
 const dry = process.argv.includes("--dry-run");

@@ -1,6 +1,8 @@
 // .agents/hooks/lib.js
-// Shared by the hook scripts: the one place that knows how a harness hands a hook its payload,
-// where the repo root is, and how the harness's tab-separated tables are read.
+// The harness-specific layer on top of scripts/lib.js: the one place that knows how a harness
+// hands a hook its payload and where the repo root is. Process running and TSV reading are
+// general-purpose and live in scripts/lib.js instead, so scripts/ never has to reach into this
+// folder to get them.
 //   const lib = require("./lib");
 //   const root = lib.root();                 // repo root (see below)
 //   const payload = lib.payload();           // stdin parsed as JSON, or null (warned on stderr)
@@ -15,7 +17,7 @@
 // is dropped. Fails open: an unreadable payload yields null and says why on stderr.
 const fs = require("fs");
 const path = require("path");
-const { spawnSync } = require("child_process");
+const scripts = require("../../scripts/lib");
 
 const win = process.platform === "win32";
 const checkout = path.resolve(__dirname, "..", "..");
@@ -44,10 +46,8 @@ function root() {
     return here;
 }
 
-function stdin() { try { return fs.readFileSync(0, "utf8"); } catch { return ""; } }
-
 function payload() {
-    const raw = stdin();
+    const raw = scripts.stdin();
     let j;
     try { j = JSON.parse(raw); } catch { warn(`payload is not JSON (${raw.length} bytes)`); return null; }
     if (!j || typeof j !== "object") { warn("payload is not a JSON object"); return null; }
@@ -91,19 +91,4 @@ function commandText(j) {
     return found.join("\n");
 }
 
-// Runs a command; output is stdout and stderr combined, status is the exit code (-1 if it could not start).
-function run(cmd, args, opts = {}) {
-    const r = spawnSync(cmd, args, { encoding: "utf8", ...opts });
-    const output = ((r.stdout || "") + (r.stderr || "")).replace(/\s+$/, "");
-    return { status: r.status === null ? -1 : r.status, output: r.error ? `${r.error.message}${output ? "\n" + output : ""}` : output };
-}
-const node = (args, opts) => run(process.execPath, args, opts);
-const shell = (cmd, opts) => run(cmd, [], { shell: true, ...opts });
-
-function readTsv(file) {
-    return fs.readFileSync(file, "utf8").split(/\r?\n/)
-        .filter(l => l.trim() && !l.startsWith("#"))
-        .map(l => l.split("\t"));
-}
-
-module.exports = { checkout, warn, fix, root, stdin, payload, filePaths, commandText, run, node, shell, readTsv };
+module.exports = { checkout, warn, fix, root, payload, filePaths, commandText, ...scripts };

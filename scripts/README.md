@@ -21,8 +21,9 @@ part of the product.
   repository root from its own location.
 - Every script starts with a short comment describing what it does and how
   to call it; scripts that take arguments print usage when run with `-h`.
-- Prefer POSIX `sh` (or the project's primary language) so scripts run the
-  same on Linux, macOS, and Git for Windows.
+- Node, so scripts run the same on Linux, macOS and Windows without a shell
+  adapter; `.githooks/post-merge` is the one exception, since Git always
+  runs it through its own bundled shell.
 - Scripts must be idempotent where possible — running them twice should not
   break anything.
   
