@@ -10,7 +10,7 @@ Requires **Node 18 or newer** (the only runtime the harness needs) and Git; noth
 2. Clone, then install the Git hooks once: `node scripts/githooks-init.js`. Node is the only runtime the harness needs; on Windows nothing else (no `sh`) is required.
 3. Run the `project-init` skill (`/project-init` in Claude Code). It asks, through the tool's own question prompt, what the project is, where the requirements live, the stack and the Jira project, and writes the answers to `MEMORY.md`, this README and `docs/agents/issue-tracker.md`. It hands you the scaffold commands for the stack; running them is up to you.
 4. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code codex -y`, then `node scripts/skills.js relink`, then commit.
-5. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#files-per-ai-tool)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
+5. Open the repo in your AI tool, authorise the Atlassian and Figma MCP servers when the tool asks (Jira is the issue tracker, see [MCP servers](#files-per-ai-tool)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
 
 ## Layout
 
@@ -31,7 +31,7 @@ Requires **Node 18 or newer** (the only runtime the harness needs) and Git; noth
 | `.editorconfig`, `.gitattributes`, `.gitignore`, `stylecop.json` | Encoding, indentation, line endings, ignored output and analyzer settings. Stack-specific entries are kept when they are inert on other stacks, so no stack is forced. |
 | `workflows/` | Workflow specs written by `loop-me`. |
 | `.scratch/` | Committed working files: feature specs, ticket drafts, prototypes not yet on a branch. |
-| `.mcp.json`, `opencode.json` | MCP server registrations (Atlassian, for Jira) for Claude Code and OpenCode. |
+| `.mcp.json`, `opencode.json` | MCP server registrations for Claude Code and OpenCode: Atlassian for Jira, Figma for designs. |
 
 ## Skills
 
@@ -48,7 +48,7 @@ node scripts/skills.js relink                                      # after any o
 - `node scripts/skills.js install` restores `.agents/skills` from the lock file. A normal clone never needs it; the post-merge Git hook runs it when the lock changes.
 - Do not edit a vendored skill in place; the next update overwrites it. Fork it under another name outside `.agents/skills`, or change it upstream.
 - Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own; **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name`.
-- The lock file records only a hash per skill, so an upstream repo going private or rewriting history is otherwise invisible. Run `npx skills update` every so often (monthly, or before a stretch of work that leans on skills), then `node .agents/hooks/test.js` to catch a skill an update broke, and review the diff before committing. The current upstreams are `addyosmani/agent-skills`, `anthropics/skills`, `dietrichgebert/ponytail`, `diskd-ai/design-doc`, `github/awesome-copilot`, `jeffallan/claude-skills`, `mattpocock/skills`, `mindrally/skills`, `thebushidocollective/han`, `vercel-labs/agent-browser`, `vercel-labs/agent-skills`, `vercel-labs/skills` and `wshobson/agents`.
+- The lock file records only a hash per skill, so an upstream repo going private or rewriting history is otherwise invisible. Run `npx skills update` every so often (monthly, or before a stretch of work that leans on skills), then `node .agents/hooks/test.js` to catch a skill an update broke, and review the diff before committing. The current upstreams are `addyosmani/agent-skills`, `anthropics/skills`, `dietrichgebert/ponytail`, `diskd-ai/design-doc`, `github/awesome-copilot`, `jeffallan/claude-skills`, `mattpocock/skills`, `mindrally/skills`, `openai/skills`, `thebushidocollective/han`, `vercel-labs/agent-browser`, `vercel-labs/agent-skills`, `vercel-labs/skills` and `wshobson/agents`.
 
 `node scripts/skills.js list` prints what is installed: name, how it is invoked, which agents route it, and where it came from. It is a report, not a rule; nothing requires a skill to be routed or listed anywhere.
 
@@ -97,7 +97,7 @@ Invoke an agent with "use the engineer agent to …", or a skill with `/tdd`, `/
 
 ### Other tools
 
-| Tool | Instructions | Skills | Hooks | Agents | MCP (Atlassian) | Notes |
+| Tool | Instructions | Skills | Hooks | Agents | MCP | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | OpenAI Codex | `AGENTS.md`, read natively | `.agents/skills/`, read natively | create `.codex/hooks.json`, same shape as `.claude/settings.json` | create `.codex/agents/<name>.toml`, one per agent | create `.codex/config.toml` with `[mcp_servers.atlassian]`, then `codex mcp login atlassian` | Edits arrive as `apply_patch` commands with the paths inside the patch; `check-edit.js` skips them until `lib.js` learns that shape. [Docs](https://developers.openai.com/codex/hooks) |
 | Cursor | `AGENTS.md`, read natively | `.agents/skills/`, read natively | create `.cursor/hooks.json` (`sessionStart`, `beforeShellExecution`, `afterFileEdit`) | create `.cursor/agents/<name>.md`: copy or symlink | create `.cursor/mcp.json` (`mcpServers`, no `type`) | Exit 2 blocks; `file_path` and `command` are top-level payload fields, which `lib.js` reads. [Docs](https://cursor.com/docs/agent/hooks) |
@@ -106,7 +106,7 @@ Invoke an agent with "use the engineer agent to …", or a skill with `/tdd`, `/
 | OpenCode | `AGENTS.md`, read natively | `.agents/skills/`, read natively | a JS plugin under `.opencode/plugins/` that shells out to the three scripts; there are no command hooks | none | `opencode.json`, in repo | [Docs](https://opencode.ai/docs/plugins/) |
 | Anything else | `AGENTS.md` | read each `SKILL.md` description and load what matches, as `AGENTS.md` says | wire the three scripts to the tool's events: payload on stdin, exit 2 blocks | an agent file pasted as the system prompt | its own file | |
 
-The Atlassian server URL and the Jira conventions the skills follow are in `docs/agents/issue-tracker.md`; the question tool per harness is in `docs/agents/questions.md`.
+Two servers are registered: Atlassian, whose URL and Jira conventions the skills follow are in `docs/agents/issue-tracker.md`, and Figma at `https://mcp.figma.com/mcp`, used by the `figma` skills. Each is authorised in the tool's own way, and the `figma` skill's `references/figma-mcp-config.md` covers a bearer token for a harness that cannot do the interactive flow. The question tool per harness is in `docs/agents/questions.md`.
 
 ## Documentation chain
 

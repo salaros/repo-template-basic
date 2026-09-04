@@ -14,6 +14,23 @@ const docsCheck = require("../../../scripts/docs-check");
 // normally false, so chmod is a no-op and a hook added there is recorded 100644: it runs for its
 // author and silently never runs on Linux or macOS. Only `git update-index --chmod=+x <file>` fixes
 // the mode Git records, so the mode in the index is what this asserts.
+// .claude/skills/<name> is a symlink into .agents/skills/<name>, so a skill has one copy on disk.
+// `npx skills add` recreates those links absolute, and `node scripts/skills.js relink` rewrites them
+// relative -- but a skill staged before the relink goes into the index as the directory it was at
+// the time, one 100644 blob per file. That commits a second copy of the skill that no longer tracks
+// the first, and leaves the worktree permanently dirty against it. Mode 120000 is the symlink, so
+// the mode in the index is what this asserts.
+function claudeSkillLinksAreSymlinks(t) {
+    const r = lib.run("git", ["ls-files", "-s", "--", ".claude/skills"]);
+    if (r.status !== 0) { console.log("skip .claude/skills mode check: not a git checkout"); return; }
+    const rows = r.output.split(/\r?\n/).filter(Boolean).map(l => l.split(/\s+/));
+    t.ok(rows.length > 0, "git tracks entries under .claude/skills/", r.output);
+    const notLinks = rows.filter(([mode]) => mode !== "120000").map(row => row[row.length - 1]);
+    t.ok(!notLinks.length,
+        "every .claude/skills/ entry is committed as a symlink (node scripts/skills.js relink, then stage)",
+        notLinks.slice(0, 10).join(", "));
+}
+
 function gitHooksAreExecutable(t) {
     const r = lib.run("git", ["ls-files", "-s", "--", ".githooks"]);
     if (r.status !== 0) { console.log("skip .githooks mode check: not a git checkout"); return; }
@@ -195,6 +212,7 @@ function docsSiteRendersTheChain(t) {
 
 module.exports = [
     gitHooksAreExecutable,
+    claudeSkillLinksAreSymlinks,
     noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,
