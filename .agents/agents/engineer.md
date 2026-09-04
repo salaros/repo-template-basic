@@ -31,4 +31,8 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | the user wanting to learn a topic | `teach` |
 | a recurring workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |
+| a fresh clone of this template, or a stack or Jira project that changed | `project-init` |
+| a capability nobody here has a skill for yet | `find-skills` |
+| the issue tracker or triage labels to switch | `setup-matt-pocock-skills` |
+| pre-commit formatting, type checks or tests to wire up | `setup-pre-commit` |
 | the end of a session | `handoff` for a successor; `retro` to improve this harness |

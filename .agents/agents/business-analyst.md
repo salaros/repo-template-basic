@@ -25,4 +25,5 @@ Decisions belong to the user; facts are yours to find. Look things up before ask
 | a recurring process to specify so it can be delegated | `loop-me` |
 | someone to be taught a topic or tool | `teach` |
 | a skill, an `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
+| questions to put to stakeholders in writing instead of live | `to-questionnaire` |
 | research, forms or checks on a website | `agent-browser` |

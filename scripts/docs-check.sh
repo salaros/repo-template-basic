@@ -1,26 +1,58 @@
 #!/bin/sh
 # scripts/docs-check.sh
-# Checks the documentation chain under docs/ (AGENTS.md, "Documentation"): every document
-# carries the ID its file name gives it, cites the upstream documents it was derived from,
-# and every citation (DOC-ID or DOC-ID/ITEM) points backwards along the chain to something
-# that exists. Prints one line per problem and exits 1 when there are any.
-# Usage: sh scripts/docs-check.sh [docs-dir]   (default: docs)
+# Checks the documentation chain. The chain itself is the table in AGENTS.md ("Documentation"):
+# every row whose "Lives in" is docs/<stage>/ is a document stage, in table order, and the folder
+# name gives the ID prefix (docs/ears/ -> EARS). This script reads that table, so the stage list
+# is written nowhere else, and reports: a table it cannot read, a stage folder or name that does
+# not fit, a skill named in the table that is not under .agents/skills/, and then, per document:
+# the ID its file name gives it, the upstream documents it was derived from, and every citation
+# (DOC-ID or DOC-ID/ITEM) pointing backwards along the chain to something that exists.
+# Prints one line per problem and exits 1 when there are any.
+# Usage: sh scripts/docs-check.sh [docs-dir] [agents-file]   (defaults: docs, AGENTS.md)
 script_dir=$(cd -P -- "$(dirname -- "$0")" && pwd)
 cd "$(dirname -- "$script_dir")" || exit 1
 command -v node >/dev/null 2>&1 || { echo "node is required" >&2; exit 1; }
 
-node - "${1:-docs}" <<'EOF'
+node - "${1:-docs}" "${2:-AGENTS.md}" <<'EOF'
 const fs = require("fs");
 const path = require("path");
 
-const root = process.argv[2];
-const chain = ["brd", "prd", "ears", "bdd", "adr", "spec"];   // stage order; tdd lives in tests/, iplan in .scratch/
-const rank = Object.fromEntries(chain.map((s, i) => [s, i]));
-const docs = new Map();       // "EARS-0003" -> { file, stage, items:Set, text }
+const [root, agentsFile] = process.argv.slice(2);
 const problems = [];
 const say = (file, msg) => problems.push(`${file}: ${msg}`);
 
-// 1. Collect documents: docs/<stage>/NNNN-<slug>.md -> <STAGE>-NNNN
+// 1. The chain, from the AGENTS.md table: | Stage | ... | Lives in | Skill |
+const chain = [];            // folder names in stage order, e.g. ["brd", "prd", ...]
+{
+    const text = fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, "utf8") : "";
+    const lines = text.split(/\r?\n/);
+    const cells = l => l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+    const header = lines.findIndex(l => /^\|/.test(l) && cells(l).includes("Stage") && cells(l).includes("Lives in"));
+    if (header < 0) say(agentsFile, "no chain table found (a Markdown table with Stage and Lives in columns)");
+    else {
+        const cols = cells(lines[header]);
+        const at = (row, name) => row[cols.indexOf(name)] || "";
+        for (let i = header + 2; i < lines.length && /^\|/.test(lines[i]); i++) {
+            const row = cells(lines[i]);
+            const stage = at(row, "Stage");
+            const lives = (at(row, "Lives in").match(/`([^`]+)`/) || [])[1] || "";
+            for (const skill of at(row, "Skill").matchAll(/`([^`]+)`/g))
+                if (!fs.existsSync(path.join(".agents/skills", skill[1], "SKILL.md")))
+                    say(agentsFile, `stage ${stage} names skill \`${skill[1]}\`, which is not under .agents/skills/`);
+            const m = lives.match(/^docs\/([a-z0-9-]+)\/$/);
+            if (!m) continue;                                   // tests/, .scratch/, src/: not a document stage
+            if (m[1].toUpperCase() !== stage) say(agentsFile, `stage ${stage} lives in ${lives}; the folder must be docs/${stage.toLowerCase()}/`);
+            chain.push(m[1]);
+        }
+        if (!chain.length) say(agentsFile, "chain table has no row living in docs/<stage>/");
+    }
+}
+const rank = Object.fromEntries(chain.map((s, i) => [s, i]));
+const prefixes = chain.map(s => s.toUpperCase());
+const refRe = new RegExp(`\\b(${prefixes.join("|") || "NONE"})-(\\d{4})(?:\\/([A-Z]{1,5}-\\d+))?\\b`, "g");
+const docs = new Map();      // "EARS-0003" -> { file, stage, items:Set, text }
+
+// 2. Collect documents: docs/<stage>/NNNN-<slug>.md -> <STAGE>-NNNN
 for (const stage of chain) {
     const dir = path.join(root, stage);
     if (!fs.existsSync(dir)) continue;
@@ -42,7 +74,8 @@ for (const stage of chain) {
     }
 }
 
-// 2. Check each document
+// 3. Check each document
+const first = chain[0];
 for (const [id, d] of docs) {
     const lines = d.text.split(/\r?\n/);
     const h1 = lines.find(l => l.startsWith("# "));
@@ -50,12 +83,10 @@ for (const [id, d] of docs) {
     else if (!h1.startsWith(`# ${id}:`)) say(d.file, `first heading must start with "# ${id}:" (found "${h1.slice(0, 40)}")`);
 
     const derived = lines.find(l => /^\**Derived from:?\**:?/i.test(l));
-    if (!derived) { if (d.stage !== "brd") say(d.file, "missing a \"**Derived from:**\" line citing upstream document IDs"); }
-    else if (d.stage !== "brd" && !/[A-Z]{3,5}-\d{4}/.test(derived)) say(d.file, "\"Derived from:\" cites no document ID");
+    if (!derived) { if (d.stage !== first) say(d.file, "missing a \"**Derived from:**\" line citing upstream document IDs"); }
+    else if (d.stage !== first && !new RegExp(`(${prefixes.join("|")})-\\d{4}`).test(derived)) say(d.file, "\"Derived from:\" cites no document ID");
 
-    // every reference anywhere in the text must resolve and point backwards
-    const refs = d.text.matchAll(/\b(BRD|PRD|EARS|BDD|ADR|SPEC)-(\d{4})(?:\/([A-Z]{1,5}-\d+))?\b/g);
-    for (const [ref, stage, num, item] of refs) {
+    for (const [ref, stage, num, item] of d.text.matchAll(refRe)) {
         const docId = `${stage}-${num}`;
         if (docId === id) continue;
         const target = docs.get(docId);
@@ -66,5 +97,5 @@ for (const [id, d] of docs) {
 }
 
 if (problems.length) { console.log(problems.join("\n")); process.exit(1); }
-console.log(`docs-check: ${docs.size} document(s) under ${root}/, no problems`);
+console.log(`docs-check: ${chain.length} stage(s) in ${agentsFile}, ${docs.size} document(s) under ${root}/, no problems`);
 EOF

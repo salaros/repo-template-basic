@@ -12,3 +12,7 @@ check-edit.sh	claude-good-sh.json	0	a valid shell script passes
 guard-command.sh	guard-force-push.json	2	force push is blocked
 guard-command.sh	guard-safe.json	0	force-with-lease is allowed
 session-start.sh	empty.json	0	session brief always exits 0
+check-edit.sh	claude-agents-md.json	0	editing AGENTS.md runs docs-check, whose table it holds
+check-edit.sh	claude-docs-readme.json	0	a non-chain Markdown file under docs/ passes docs-check
+check-edit.sh	claude-agent-file.json	0	editing a route table runs the skills check
+check-edit.sh	claude-lock.json	0	editing the lock runs the skills check

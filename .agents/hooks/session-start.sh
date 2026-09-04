@@ -10,13 +10,10 @@ echo "branch: $branch"
 
 [ -f .git/hooks/post-merge ] || echo "git hooks: not installed. Run: sh scripts/githooks-init.sh"
 
-if command -v node >/dev/null 2>&1 && [ -f skills-lock.json ]; then
-    node -e '
-        const fs = require("fs");
-        const locked = Object.keys(require("./skills-lock.json").skills);
-        const missing = locked.filter(s => !fs.existsSync(".agents/skills/" + s + "/SKILL.md"));
-        if (missing.length) console.log("skills in skills-lock.json but missing from .agents/skills: " + missing.join(" ") + ". Run: sh scripts/skills-install.sh");
-    ' 2>/dev/null
+if command -v node >/dev/null 2>&1 && [ -f scripts/skills.js ]; then
+    missing=$(node scripts/skills.js missing 2>/dev/null | tr '
+' ' ')
+    [ -n "$missing" ] && echo "skills in skills-lock.json but missing from .agents/skills: ${missing}. Run: sh scripts/skills-install.sh"
 fi
 
 [ -f MEMORY.md ] && echo "project: facts in MEMORY.md" || echo "project: not initialised (no MEMORY.md). Run the project-init skill first"
