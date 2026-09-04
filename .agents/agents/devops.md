@@ -30,7 +30,7 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | infrastructure or config that feels over-built | `ponytail-audit` scans the whole repo and ranks what to delete, simplify or replace with a native equivalent |
 | a pipeline or manifest that works but reads badly | `code-simplification`, which restructures for clarity without changing behaviour. Reach for it where `ponytail` would delete and there is nothing to delete |
 | a change to check before it merges | `code-review-and-quality` |
-| "what did we agree to fix later" | `ponytail-debt` harvests the `ponytail:` comments into a ledger |
+| "what did we agree to fix later" | `duck-debt` builds a read-only ledger from the `TODO`, `FIXME`, `HACK` and `XXX` comments, tiered by whether each one carries an issue link; `ponytail-debt` for the `ponytail:` comments that skill leaves behind |
 | scripts or tooling in this repo being restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-repo scan |
 | behaviour to build or fix in that tooling | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
 | a runbook, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
@@ -38,7 +38,7 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | a recurring operational workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |
 | a capability nobody here has a skill for yet | `find-skills` |
-| the end of a session | `handoff` for a successor; `retro` to improve this harness |
+| the end of a session | `duck-debt` first, so the retrospective opens on what was actually deferred rather than what anyone remembers; then `retro` to improve this harness, and `handoff` for a successor |
 
 ## Working in this repo
 

@@ -12,7 +12,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 1. **Ground.** Read `MEMORY.md` for the project's stack and where its requirements live, then `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and the ADRs under `docs/adr/` that touch the area. Done when you can name the domain terms the task uses, or have confirmed no glossary exists yet.
 2. **Route.** Pick every row of the table below that matches the request, in table order. Done when the skills you will run are listed, with the fixed point (commit or branch) the work starts from noted for the review.
 3. **Run** the skills in that order. Each skill carries its own definition of done; a skill is finished only when its own criterion is met, never when the next one looks ready to start.
-4. **Review.** Against the fixed point run `code-review` for this repo's standards and the originating spec, then `code-review-and-quality` for correctness, architecture, security and performance. Two passes, not two opinions: the first is anchored to this repo and to what was asked, the second to engineering quality in general. Skip its readability axis; `ponytail` already governed that while you were writing. Done when every finding is fixed or explicitly handed to the user as deferred.
+4. **Review.** Against the fixed point run `code-review` for this repo's standards and the originating spec, then `code-review-and-quality` for correctness, architecture, security and performance. Two passes, not two opinions: the first is anchored to this repo and to what was asked, the second to engineering quality in general. Skip its readability axis; `ponytail` already governed that while you were writing. When `MEMORY.md` gives the stack as .NET, add `dotnet-best-practices` over the same diff: it takes a selection rather than scanning the repo, so hand it the changed C# files by name. Done when every finding is fixed or explicitly handed to the user as deferred.
 5. **Report**: what changed, which skills ran, what is left and why.
 
 ## Route
@@ -28,12 +28,13 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | code that feels over-built | `ponytail-audit` scans the whole codebase and ranks what to delete, simplify or replace with a stdlib equivalent |
 | code that works but reads badly | `code-simplification`, which restructures for clarity without changing behaviour. Reach for it where `ponytail` would delete and there is nothing to delete |
 | a change to check before it merges | `code-review-and-quality` |
-| "what did we agree to fix later" | `ponytail-debt` harvests the `ponytail:` comments into a ledger |
+| "what did we agree to fix later" | `duck-debt` builds a read-only ledger from the `TODO`, `FIXME`, `HACK` and `XXX` comments, tiered by whether each one carries an issue link; `ponytail-debt` for the `ponytail:` comments that skill leaves behind |
 | behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
 | a Figma design or node URL to build | `figma` for the MCP server and its design context, then `figma-implement-design` for the code. Work from the link the designer gives you: the server reads the node it names, it does not browse the file |
 | React or Next.js code | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
 | ASP.NET Core code, when `MEMORY.md` gives the stack as .NET: Blazor, Razor Pages, MVC, Minimal APIs, Web APIs, SignalR, gRPC, middleware, DI, configuration, auth, or a framework upgrade | `aspnet-core` |
+| structure being added or reshaped in C#, when `MEMORY.md` gives the stack as .NET: a new service, handler, provider, repository or abstraction | `dotnet-design-pattern-review`, pointed at the types you added. It reviews and suggests without editing. Its required patterns describe a CLI or host application (`CommandHandler<TOptions>`, `SetupCommand(IHost host)`, `.resx` resource managers), so weigh each against what this project actually is rather than adopting them because the checklist names them. A one-line fix changes no structure and needs none of this |
 | something to drive in a browser or Electron app | `agent-browser` |
 | a skill, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
 | the user wanting to learn a topic | `teach` |
@@ -43,4 +44,4 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a capability nobody here has a skill for yet | `find-skills` |
 | the issue tracker or triage labels to switch | `setup-matt-pocock-skills` |
 | a container, pipeline, deployment, Git hook or anything else the code runs on | hand to the `devops` agent |
-| the end of a session | `handoff` for a successor; `retro` to improve this harness |
+| the end of a session | `duck-debt` first, so the retrospective opens on what was actually deferred rather than what anyone remembers; then `retro` to improve this harness, and `handoff` for a successor |
