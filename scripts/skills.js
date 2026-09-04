@@ -110,7 +110,7 @@ const commands = {
         // Skills are committed, so a normal clone never needs this; run it when .agents/skills is missing
         // or damaged, or after a merge that changed the lock (the post-merge Git hook does).
         if (!fs.existsSync(LOCK)) { console.error(`${LOCK} not found in ${root}`); process.exit(1); }
-        const r = require("child_process").spawnSync("npx --yes skills@latest experimental_install", { shell: true, stdio: "inherit" });
+        const r = lib.shell("npx --yes skills@latest experimental_install", { stdio: "inherit" });
         if (r.status !== 0) process.exit(r.status === null ? 1 : r.status);
         commands.relink();
         console.log(`Skills restored from ${LOCK}.`);
