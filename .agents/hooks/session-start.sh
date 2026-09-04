@@ -19,6 +19,7 @@ if command -v node >/dev/null 2>&1 && [ -f skills-lock.json ]; then
     ' 2>/dev/null
 fi
 
+[ -f MEMORY.md ] && echo "project: facts in MEMORY.md" || echo "project: not initialised (no MEMORY.md). Run the project-init skill first"
 [ -f CONTEXT-MAP.md ] && echo "domain: multi-context, start at CONTEXT-MAP.md"
 [ -f CONTEXT.md ] && echo "domain: glossary in CONTEXT.md"
 [ -d docs/adr ] && echo "decisions: docs/adr ($(ls docs/adr | wc -l | tr -d ' ') ADRs)"

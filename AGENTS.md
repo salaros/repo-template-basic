@@ -6,6 +6,10 @@ Language-agnostic repository template: layout, Git hooks, and an agent harness. 
 
 Each folder's README says what belongs in it and how it is organised: `src/`, `tests/`, `scripts/`, `tools/`, `docs/`. Read the one for the folder you are about to touch.
 
+## Project
+
+`MEMORY.md` at the root holds the facts no file derives: what the project is, where its requirements live, the stack, the Jira project. Read it first. The `project-init` skill writes it; until it exists this is still an unconfigured template, and that skill is the first thing to run.
+
 ## Documentation
 
 The `docs/` folder contains all the relevant information. Depending on the scope of this repo it will store either documentation for a single library, module, microservice or an entire monolith.

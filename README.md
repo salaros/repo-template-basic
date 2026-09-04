@@ -6,8 +6,9 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 
 1. **Windows only, before cloning:** enable Developer Mode (Settings → System → For developers) and run `git config --global core.symlinks true`. The `.claude/` folder is tracked as symlinks; without this, Git checks them out as text files and Claude Code sees no skills.
 2. Clone, then install the Git hooks once: `sh scripts/githooks-init.sh`
-3. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code codex -y`, then `sh scripts/skills-relink.sh`, then commit.
-4. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#mcp-servers)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
+3. Run the `project-init` skill (`/project-init` in Claude Code). It asks, through the tool's own question prompt, what the project is, where the requirements live, the stack and the Jira project, and writes the answers to `MEMORY.md`, this README and `docs/agents/issue-tracker.md`. It hands you the scaffold commands for the stack; running them is up to you.
+4. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code codex -y`, then `sh scripts/skills-relink.sh`, then commit.
+5. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#mcp-servers)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
 
 ## Layout
 
@@ -16,6 +17,7 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 | `src/`, `tests/`, `scripts/`, `tools/`, `docs/` | Product code, tests, repo automation, dev utilities, documents. Each has a README describing what belongs there. |
 | `AGENTS.md` | The one file every agent reads: layout, where skills are, domain-language pointers. Kept short on purpose. |
 | `CLAUDE.md` | One line, `@AGENTS.md`, because Claude Code reads `CLAUDE.md` rather than `AGENTS.md`. |
+| `MEMORY.md` | The project facts (name, purpose, requirements location, stack, Jira project), one per line. Written by the `project-init` skill; absent until it runs. |
 | `skills-lock.json` | Written by `npx skills`: source, path and hash of every installed skill. The single record of what is installed; `scripts/skills-install.sh` restores from it. |
 | `.agents/skills/<name>/` | The canonical, vendored copy of each skill (`SKILL.md` plus its reference files). |
 | `.agents/hooks/` | Harness-neutral hook scripts (see [Hooks](#hooks)). |
@@ -43,7 +45,7 @@ sh scripts/skills-relink.sh                                        # after any o
 - The relink step matters on Windows because the CLI recreates the Claude Code links as absolute junctions, which Git cannot store; on Linux and macOS it is a no-op.
 - `sh scripts/skills-install.sh` restores `.agents/skills` from the lock file. A normal clone never needs it; the post-merge Git hook runs it when the lock changes.
 - Do not edit a vendored skill in place; the next update overwrites it. Fork it under another name outside `.agents/skills`, or change it upstream.
-- Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own (`tdd`, `grilling`, `code-review`); **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name` (`implement`, `teach`, `to-tickets`, `triage`, `handoff`, `retro`). `npx skills list` shows what is installed.
+- Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own (`tdd`, `grilling`, `code-review`); **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name` (`project-init`, `implement`, `teach`, `to-tickets`, `triage`, `handoff`, `retro`). `npx skills list` shows what is installed.
 
 ## Hooks
 
@@ -240,6 +242,10 @@ To switch trackers (GitHub via `gh`, GitLab via `glab`, or local Markdown under 
 
 - `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` (see shared setup).
 - `.out-of-scope/<concept>.md`: one file per rejected feature request, written by the skill when an enhancement is closed as `wontfix` and read to spot repeats.
+
+### `project-init` (local skill, not vendored)
+
+Interviews the developer with the harness's question tool and writes `MEMORY.md`, the `Project` section of this README (between `project-init` markers) and the key and site in `docs/agents/issue-tracker.md` with its edit tool, so it needs no runtime and no shell. It records only: the scaffold commands it hands over for .NET, Node and Python stacks are for the developer to run. Re-running replaces the previous values.
 
 ### `brd` (local skill, not vendored)
 
