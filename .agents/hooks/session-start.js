@@ -6,7 +6,7 @@
 const fs = require("fs");
 const lib = require("./lib");
 
-process.chdir(lib.checkout);
+process.chdir(lib.root());
 const say = line => process.stdout.write(line + "\n");
 const git = args => { const r = lib.run("git", args); return r.status === 0 ? r.output.trim() : ""; };
 
