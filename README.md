@@ -98,7 +98,7 @@ Three Node scripts in `.agents/hooks/`, run with the `node` on your PATH (Window
 | Script | Event | Does |
 | --- | --- | --- |
 | `session-start.js` | session start | Prints a brief into the agent's context: branch, whether Git hooks are installed, skills recorded in `skills-lock.json` but missing from disk, whether `CONTEXT.md`, `docs/adr/` and the issue-tracker config exist. |
-| `guard-command.js` | before a shell command | Blocks force pushes, `git reset --hard`, `git clean -f`, `git branch -D`, and recursive deletes of `/`, `~`, `.git` or `*`. The agent is told to ask you instead. |
+| `guard-command.js` | before a shell command | Blocks force pushes, `git reset --hard`, `git clean -f`, `git branch -D`, and recursive deletes of `/`, `~`, `.git` or `*`. Checks the harness's own command field (falling back to the raw payload for an unrecognised shape) and only where the phrase could be a real invocation, so a dangerous phrase quoted as data in another command's arguments does not trip it. The agent is told to ask you instead. |
 | `check-edit.js` | after a file write/edit | Syntax-checks `*.js`, validates `*.json`, runs `scripts/docs-check.js` for Markdown under `docs/` and for `AGENTS.md`, runs `scripts/skills.js check` when the lock, an agent, a local skill or README changed, runs the hook suite when the harness itself changed, and refuses in-place edits of vendored skills. |
 
 The scripts are harness-neutral; the wiring is one small config file per tool, listed under [Files per AI tool](#files-per-ai-tool). Only the Claude Code wiring ships in the repo, because it is the one that has been run.

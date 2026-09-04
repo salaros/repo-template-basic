@@ -10,6 +10,7 @@
 const fs = require("fs");
 const path = require("path");
 const lib = require("./lib");
+const docsCheck = require("../../scripts/docs-check");
 
 const root = lib.checkout;
 process.chdir(root);
@@ -47,6 +48,36 @@ for (const [script, fixture, expect, setup, want, note] of lib.readTsv(".agents/
 // The roster must be consistent too: every skill routed, README table current.
 const roster = lib.node(["scripts/skills.js", "check"]);
 if (roster.status === 0) pass++; else failed("node scripts/skills.js check", roster.output);
+
+// docs-check's citation logic, exercised directly against a throwaway doc tree (real stage
+// folder names, so it uses the real AGENTS.md chain) rather than through a fixture: a duplicate
+// document number, a citation to an item that does not exist in its target, and a citation that
+// jumps forward in the chain.
+{
+    const tmp = ".agents/hooks/tests/tmp-docs-check";
+    const write = (rel, ...lines) => {
+        const file = path.join(tmp, rel);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, lines.join("\n") + "\n");
+    };
+    fs.rmSync(tmp, { recursive: true, force: true });
+    write("brd/9001-alpha.md", "# BRD-9001: Alpha");
+    write("brd/9001-beta.md", "# BRD-9001: Beta");
+    write("brd/9002-source.md", "# BRD-9002: Source", "", "- BR-1: Something real");
+    write("prd/9002-citer.md", "# PRD-9002: Citer", "", "**Derived from:** BRD-9002", "", "Refines BRD-9002/BR-2, which does not exist.");
+    write("brd/9003-support.md", "# BRD-9003: Support");
+    write("ears/9003-late.md", "# EARS-9003: Late");
+    write("prd/9003-early.md", "# PRD-9003: Early", "", "**Derived from:** BRD-9003", "", "See EARS-9003 for details.");
+    const { problems } = docsCheck.check(tmp, "AGENTS.md");
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const expectProblem = (title, needle) => {
+        if (problems.some(p => p.includes(needle))) pass++;
+        else failed(`docs-check: ${title}`, `expected a problem containing "${needle}"\ngot:\n${problems.join("\n") || "(none)"}`);
+    };
+    expectProblem("duplicate document number", "already used by");
+    expectProblem("citation to a missing item", "has no item BR-2");
+    expectProblem("citation later in the chain", "later in the chain");
+}
 
 console.log(`harness tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

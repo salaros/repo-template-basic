@@ -1,0 +1,1 @@
+{"tool_name":"Bash","tool_input":{"command":"printf '%s\\n' 'git push origin master --force is just text here' non-issue"}}

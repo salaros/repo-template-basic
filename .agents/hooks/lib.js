@@ -5,6 +5,7 @@
 //   const root = lib.root();                 // repo root (see below)
 //   const payload = lib.payload();           // stdin parsed as JSON, or null (warned on stderr)
 //   const files = lib.filePaths(payload, root); // edited file(s), repo-relative, forward slashes
+//   const cmd = lib.commandText(payload)     // the shell command text, or "" if the shape is unknown
 //   lib.node(["scripts/skills.js", "check"]) // run a script with this node; { status, output }
 //   lib.readTsv("scripts/stacks.tsv")        // rows as arrays of cells; blank and # lines skipped
 // Root: CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR or GEMINI_PROJECT_DIR when set, else the checkout
@@ -73,6 +74,23 @@ function filePaths(j, rootDir) {
     return [...out];
 }
 
+// The shell command text a pre-tool-use payload carries: tool_input.command (Claude Code, Gemini
+// CLI), command at the top level (Cursor beforeShellExecution) or toolArgs.command where toolArgs
+// is a JSON string (Copilot). Returns "" (and warns) when the shape is unrecognised, so a caller
+// that only wants to inspect the real command text can fall back to the raw payload for safety.
+function commandText(j) {
+    if (!j) return "";
+    const found = [];
+    const ti = j.tool_input;
+    if (ti && typeof ti === "object" && typeof ti.command === "string") found.push(ti.command);
+    if (typeof j.command === "string") found.push(j.command);
+    let ta = j.toolArgs;
+    if (typeof ta === "string") { try { ta = JSON.parse(ta); } catch { ta = null; } }
+    if (ta && typeof ta === "object" && typeof ta.command === "string") found.push(ta.command);
+    if (!found.length) { warn(`no command text in payload (keys: ${Object.keys(j).join(", ") || "none"})`); return ""; }
+    return found.join("\n");
+}
+
 // Runs a command; output is stdout and stderr combined, status is the exit code (-1 if it could not start).
 function run(cmd, args, opts = {}) {
     const r = spawnSync(cmd, args, { encoding: "utf8", ...opts });
@@ -88,4 +106,4 @@ function readTsv(file) {
         .map(l => l.split("\t"));
 }
 
-module.exports = { checkout, warn, fix, root, stdin, payload, filePaths, run, node, shell, readTsv };
+module.exports = { checkout, warn, fix, root, stdin, payload, filePaths, commandText, run, node, shell, readTsv };

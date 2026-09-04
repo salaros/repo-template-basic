@@ -16,6 +16,8 @@
 .agents/hooks/check-edit.js	claude-lock.json	0	-	-	editing the lock runs the skills check
 .agents/hooks/guard-command.js	guard-force-push.json	2	-	blocked this command	force push is blocked
 .agents/hooks/guard-command.js	guard-safe.json	0	-	-	force-with-lease is allowed
+.agents/hooks/guard-command.js	guard-metadata-not-command.json	0	-	-	dangerous text in an unrelated payload field (not the command) is ignored
+.agents/hooks/guard-command.js	guard-quoted-in-command.json	0	-	-	a dangerous phrase quoted as data inside another command's own arguments is not treated as an invocation
 .agents/hooks/session-start.js	empty.json	0	-	branch:	session brief always exits 0
 scripts/on-manifest-change.js --dry-run	paths-lock.txt	0	-	would run: node scripts/skills.js install	a changed skills lock restores the skills
 scripts/on-manifest-change.js --dry-run	paths-package-json.txt	0	-	nothing to restore	package.json alone restores nothing while no lock file exists
