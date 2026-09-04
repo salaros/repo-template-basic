@@ -73,3 +73,4 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domai
 
 - Install the Git hooks once per clone: `sh scripts/githooks-init.sh`.
 - Hook scripts for agent harnesses are in `.agents/hooks/`; a blocked command means the guard there fired, so ask the user rather than working around it.
+- Ask questions through the harness's question tool, never as plain text: every interview a skill runs (`grilling`, `grill-with-docs`, `brd`, `prd`, `feature-forge`, `project-init`, `to-questionnaire`, `teach` and any other), and every confirmation before acting. One call per round, the recommended answer first. Tool names per harness and the fallback for a harness without one are in `docs/agents/questions.md`.

@@ -55,9 +55,11 @@ Three POSIX `sh` scripts in `.agents/hooks/`. Each reads the harness's JSON payl
 | --- | --- | --- |
 | `session-start.sh` | session start | Prints a brief into the agent's context: branch, whether Git hooks are installed, skills recorded in `skills-lock.json` but missing from disk, whether `CONTEXT.md`, `docs/adr/` and the issue-tracker config exist. |
 | `guard-command.sh` | before a shell command | Blocks force pushes, `git reset --hard`, `git clean -f`, `git branch -D`, and recursive deletes of `/`, `~`, `.git` or `*`. The agent is told to ask you instead. |
-| `check-edit.sh` | after a file write/edit | Syntax-checks `*.sh`, validates `*.json`, runs `scripts/docs-check.sh` for files under `docs/<stage>/`, and refuses in-place edits of vendored skills. |
+| `check-edit.sh` | after a file write/edit | Syntax-checks `*.sh` and `*.js`, validates `*.json`, runs `scripts/docs-check.sh` for files under `docs/<stage>/`, runs the hook suite when a file under `.agents/hooks/` changed, and refuses in-place edits of vendored skills. |
 
 The scripts are harness-neutral; the wiring is one small config file per tool, listed under [Files per AI tool](#files-per-ai-tool). Only the Claude Code wiring ships in the repo, because it is the one that has been run.
+
+`lib.sh` (with `payload.js` for the JSON) is the one place that knows how a harness hands over its payload: it finds the repo root (`CLAUDE_PROJECT_DIR`, `CURSOR_PROJECT_DIR` or `GEMINI_PROJECT_DIR`, else the checkout the hooks live in) and turns the edited path into a repo-relative one whether the harness sent `tool_input.file_path` (Claude Code, Gemini CLI), a top-level `file_path` (Cursor) or a `toolArgs` string with a `path` (Copilot). Paths outside the repo and unreadable payloads are skipped with a note on stderr, never blocked. `sh .agents/hooks/test.sh` pipes every fixture in `.agents/hooks/tests/` through its hook and compares exit codes; `check-edit.sh` runs that suite itself whenever a hook changes.
 
 ## Agents
 
@@ -215,6 +217,7 @@ Most skills need nothing beyond their own folder. The ones below read or write p
 - `docs/agents/issue-tracker.md`: which MCP tools create, read, label, link and close issues. **Replace `TODO-PROJECT-KEY` with your Jira project key** before first use.
 - `docs/agents/triage-labels.md`: maps the five triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) to plain Jira labels of the same names.
 - `docs/agents/domain.md`: tells skills to read `CONTEXT.md` and `docs/adr/` before exploring, and to stay silent when they are absent.
+- `docs/agents/questions.md`: the question tool each harness offers (Claude Code, OpenCode, Copilot and so on) and the plain-text fallback, so interviews and confirmations always go through the tool. `AGENTS.md` ("Working here") makes this a rule for every skill.
 - The `## Agent skills` section in `AGENTS.md` points at the three files.
 
 To switch trackers (GitHub via `gh`, GitLab via `glab`, or local Markdown under `.scratch/`), run `/setup-matt-pocock-skills` in your agent; the skill is vendored and rewrites the three files and the `AGENTS.md` block from its templates.

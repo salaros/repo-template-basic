@@ -1,0 +1,14 @@
+check-edit.sh	claude-vendored-relative.json	2	vendored skill edited via a repo-relative path is refused
+check-edit.sh	claude-vendored-absolute.json	2	vendored skill edited via an absolute path is refused
+check-edit.sh	claude-vendored-via-link.json	2	vendored skill edited through the .claude/skills link is refused
+check-edit.sh	claude-local-skill.json	0	a local skill may be edited
+check-edit.sh	cursor-vendored.json	2	Cursor afterFileEdit puts file_path at the top level
+check-edit.sh	copilot-vendored.json	2	Copilot sends toolArgs as a JSON string with a path key
+check-edit.sh	claude-outside-repo.json	0	a file outside the repo is skipped
+check-edit.sh	not-json.txt	0	an unreadable payload fails open
+check-edit.sh	claude-no-path.json	0	a payload with no file path is ignored
+check-edit.sh	claude-bad-doc.json	2	a chain document with a wrong heading fails docs-check
+check-edit.sh	claude-good-sh.json	0	a valid shell script passes
+guard-command.sh	guard-force-push.json	2	force push is blocked
+guard-command.sh	guard-safe.json	0	force-with-lease is allowed
+session-start.sh	empty.json	0	session brief always exits 0
