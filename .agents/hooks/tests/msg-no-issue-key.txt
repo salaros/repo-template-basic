@@ -1,0 +1,1 @@
+feat(hooks): warn when a commit cites no issue

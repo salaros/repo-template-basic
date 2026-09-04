@@ -31,7 +31,7 @@ const rules = [
         check: () => { const r = docsCheck.check(); return r.problems.length > 0 && `documentation chain check failed (see AGENTS.md, Documentation; fix with the docs-check skill):\n${r.problems.join("\n")}`; },
     },
     {   // The harness itself changed: the suite must still pass (HOOK_TEST stops recursion).
-        when: /^(?:\.agents\/hooks\/|\.githooks\/|scripts\/(?:on-manifest-change|docs-check|skills|check-staged-docs|format-changed)\.js$|scripts\/stacks\.tsv$)/,
+        when: /^(?:\.agents\/hooks\/|\.githooks\/|scripts\/(?:on-manifest-change|docs-check|skills|check-staged-docs|format-changed|check-commit-msg)\.js$|scripts\/stacks\.tsv$)/,
         check: file => { if (process.env.HOOK_TEST) return false; const r = lib.node([".agents/hooks/test.js"]); return r.status !== 0 && `hook tests failed after editing ${file}:\n${r.output}`; },
     },
 ];
