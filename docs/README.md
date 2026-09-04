@@ -1,6 +1,6 @@
 # Documents
 
-Everything written about this project before and beside its code lives here, one folder per stage of the chain in `AGENTS.md` ("Documentation"). That table is the only list of stages, folders and skills; this file says what each document is for and what it must contain. `sh scripts/docs-check.sh` verifies that the folders, IDs and citations agree with the table.
+Everything written about this project before and beside its code lives here, one folder per stage of the chain in `AGENTS.md` ("Documentation"). That table is the only list of stages, folders and skills; this file says what each document is for and what it must contain. `node scripts/docs-check.js` verifies that the folders, IDs and citations agree with the table.
 
 Every document is `docs/<stage>/NNNN-<slug>.md`, its ID is `<STAGE>-NNNN`, its first heading is `# <STAGE>-NNNN: <title>`, and from the PRD on it carries a `**Derived from:**` line citing the document(s) upstream. Items a later stage will refine start their line with a short ID (`BR-2`, `FR-3`, `AC-1`, `### D-1`), and later documents cite them as `DOC-ID/ITEM`.
 

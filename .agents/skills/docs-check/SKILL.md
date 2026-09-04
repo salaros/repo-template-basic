@@ -5,14 +5,14 @@ description: Verify and repair the documentation chain under docs/. Use after wr
 
 # Docs check
 
-The chain in `AGENTS.md` ("Documentation") only pays off when every document can be walked back to the business need. `scripts/docs-check.sh` verifies that mechanically: file names give IDs, first headings carry them, every document after the BRD says what it was derived from, and every citation resolves to an existing document or item earlier in the chain.
+The chain in `AGENTS.md` ("Documentation") only pays off when every document can be walked back to the business need. `scripts/docs-check.js` verifies that mechanically: file names give IDs, first headings carry them, every document after the BRD says what it was derived from, and every citation resolves to an existing document or item earlier in the chain.
 
 ## Steps
 
 1. Run it from the repo root:
 
    ```bash
-   sh scripts/docs-check.sh
+   node scripts/docs-check.js
    ```
 
    Done when you have the full list of problems, one per line, or the line saying there are none.

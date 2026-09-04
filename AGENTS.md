@@ -37,7 +37,7 @@ Rules of the chain:
 - Start a stage only from the agreed artifact of the stage before it. A missing upstream document is written first, never skipped.
 - Write each artifact to the folder in the table, named `NNNN-<slug>.md`, even when the skill's own instructions name another place (`feature-forge` says `specs/`, `create-implementation-plan` says `/plan/`).
 - The file name gives the document its ID: `docs/ears/0003-<slug>.md` is `EARS-0003`, and its first heading is `# EARS-0003: <title>`. Anything inside a document that a later stage will refine carries a short ID at the start of its line (`- BR-2: …`, `- FR-3: …`, `- AC-1: …`, `### D-1 …`).
-- Every document after the BRD has a `**Derived from:**` line citing the upstream document IDs, and cites the items it refines as `DOC-ID/ITEM` (`PRD-0002/FR-3`) where it uses them. Citations point backwards along the chain only, and every one must resolve. `sh scripts/docs-check.sh` verifies this, reading the stages from the table above; the edit hook runs it after every change under `docs/` or to this file, and the `docs-check` skill repairs what it reports.
+- Every document after the BRD has a `**Derived from:**` line citing the upstream document IDs, and cites the items it refines as `DOC-ID/ITEM` (`PRD-0002/FR-3`) where it uses them. Citations point backwards along the chain only, and every one must resolve. `node scripts/docs-check.js` verifies this, reading the stages from the table above; the edit hook runs it after every change under `docs/` or to this file, and the `docs-check` skill repairs what it reports.
 - Sharpen a fuzzy ask with `grilling` before the BRD or PRD, and run `domain-modeling` the moment a term or decision lands, whatever the stage.
 - A prototype needs only PRD and BDD, then the `prototype` skill. An MVP runs the whole chain.
 
@@ -45,7 +45,7 @@ Rules of the chain:
 
 Skills live in `.agents/skills/<name>/SKILL.md`, vendored by `npx skills` and recorded in `skills-lock.json`. If your harness has not surfaced them, read the `description` line of each `SKILL.md` and load the ones that match the task. The `engineer` agent (`.agents/agents/engineer.md`) routes a task through them.
 
-Skills are vendored: add or update them with `npx skills` (then `sh scripts/skills-relink.sh`) instead of editing them in place.
+Skills are vendored: add or update them with `npx skills` (then `node scripts/skills.js relink`) instead of editing them in place.
 
 ## Agent skills
 
@@ -71,6 +71,6 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domai
 
 ## Working here
 
-- Install the Git hooks once per clone: `sh scripts/githooks-init.sh`.
+- Install the Git hooks once per clone: `node scripts/githooks-init.js`.
 - Hook scripts for agent harnesses are in `.agents/hooks/`; a blocked command means the guard there fired, so ask the user rather than working around it.
 - Ask questions through the harness's question tool, never as plain text: every interview a skill runs (`grilling`, `grill-with-docs`, `brd`, `prd`, `feature-forge`, `project-init`, `to-questionnaire`, `teach` and any other), and every confirmation before acting. One call per round, the recommended answer first. Tool names per harness and the fallback for a harness without one are in `docs/agents/questions.md`.

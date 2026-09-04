@@ -15,8 +15,8 @@ part of the product.
 
 ### Conventions
 
-- One task per script, named after what it does (`setup-hooks.sh`,
-  `build.sh`, `release.sh`).
+- One task per script, named after what it does (`githooks-init.js`,
+  `build.js`, `release.js`); Node, so they run the same on every OS.
 - Scripts are safe to run from any working directory — each resolves the
   repository root from its own location.
 - Every script starts with a short comment describing what it does and how

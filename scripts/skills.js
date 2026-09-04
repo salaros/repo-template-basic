@@ -3,12 +3,12 @@
 // The one place that knows the skill roster: what is installed, how each skill is invoked, which
 // agent routes it, where it came from, and how the per-harness links are laid out. Inputs are
 // skills-lock.json, the frontmatter of .agents/skills/*/SKILL.md, and the Route tables in
-// .agents/agents/*.md. Shell callers: scripts/skills-relink.sh, scripts/skills-install.sh,
-// .agents/hooks/session-start.sh and .agents/hooks/check-edit.sh.
+// .agents/agents/*.md. Callers: .agents/hooks/session-start.js, check-edit.js and test.js.
 //   node scripts/skills.js list             every installed skill: name, invocation, agents, source
 //   node scripts/skills.js missing          skills in the lock but not on disk, one per line; exit 1 if any
 //   node scripts/skills.js vendored <name>  exit 0 when <name> is recorded in skills-lock.json
 //   node scripts/skills.js relink           rewrite <dir>/skills/<name> links into .agents/skills as relative symlinks
+//   node scripts/skills.js install          restore every skill in skills-lock.json with npx skills, then relink
 //   node scripts/skills.js check            every installed skill routed by an agent, README table current; exit 1 otherwise
 //   node scripts/skills.js write            regenerate README's table between <!-- skills:start --> and <!-- skills:end -->
 const fs = require("fs");
@@ -106,11 +106,20 @@ const commands = {
         }
         console.log(`skill links: ${fixed} rewritten as relative, ${kept} already relative`);
     },
+    install() {
+        // Skills are committed, so a normal clone never needs this; run it when .agents/skills is missing
+        // or damaged, or after a merge that changed the lock (the post-merge Git hook does).
+        if (!fs.existsSync(LOCK)) { console.error(`${LOCK} not found in ${root}`); process.exit(1); }
+        const r = require("child_process").spawnSync("npx --yes skills@latest experimental_install", { shell: true, stdio: "inherit" });
+        if (r.status !== 0) process.exit(r.status === null ? 1 : r.status);
+        commands.relink();
+        console.log(`Skills restored from ${LOCK}.`);
+    },
     check() {
         const problems = [];
         for (const r of roster()) if (!r.agents.length) problems.push(`${SKILLS}/${r.name}: routed by no agent; add it to a Route table in ${AGENTS}/`);
         const on = new Set(installed());
-        for (const n of Object.keys(lock())) if (!on.has(n)) problems.push(`${LOCK}: ${n} is recorded but not under ${SKILLS}/; run sh scripts/skills-install.sh`);
+        for (const n of Object.keys(lock())) if (!on.has(n)) problems.push(`${LOCK}: ${n} is recorded but not under ${SKILLS}/; run: node scripts/skills.js install`);
         const { block } = readmeBlock();
         if (block === null) problems.push(`${README}: no ${START} … ${END} markers for the skills table`);
         else if (block !== rendered()) problems.push(`${README}: skills table is stale; run: node scripts/skills.js write`);
