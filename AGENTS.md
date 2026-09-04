@@ -46,7 +46,7 @@ Rules of the chain:
 
 ## Skills
 
-Skills live in `.agents/skills/<name>/SKILL.md`, vendored by `npx skills` and recorded in `skills-lock.json`. If your harness has not surfaced them, read the `description` line of each `SKILL.md` and load the ones that match the task. The `engineer` agent (`.agents/agents/engineer.md`) routes a task through them.
+Skills live in `.agents/skills/<name>/SKILL.md`, vendored by `npx skills` and recorded in `skills-lock.json`. If your harness has not surfaced them, read the `description` line of each `SKILL.md` and load the ones that match the task. The agents in `.agents/agents/` route a task through them: `engineer`, `devops`, `business-analyst`, `assistant`.
 
 Skills are vendored: add or update them with `npx skills` (then `node scripts/skills.js relink`) instead of editing them in place.
 

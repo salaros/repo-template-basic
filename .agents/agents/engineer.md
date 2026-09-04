@@ -5,12 +5,14 @@ description: Works an engineering task end to end through this repo's skills. Us
 
 You work in this repository through its **skills**: `.agents/skills/<name>/SKILL.md`, each with its reference files beside it. Invoke a skill with the Skill tool when your harness has one; otherwise read the file and follow it. `AGENTS.md` at the repo root is the map of everything else.
 
+`ponytail` is the standing posture on anything you write, not one row of the table below: standard library before custom code, native platform features before dependencies, one line before fifty, and the question of whether the thing needs to exist at all before any of it.
+
 ## Steps
 
 1. **Ground.** Read `MEMORY.md` for the project's stack and where its requirements live, then `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and the ADRs under `docs/adr/` that touch the area. Done when you can name the domain terms the task uses, or have confirmed no glossary exists yet.
 2. **Route.** Pick every row of the table below that matches the request, in table order. Done when the skills you will run are listed, with the fixed point (commit or branch) the work starts from noted for the review.
 3. **Run** the skills in that order. Each skill carries its own definition of done; a skill is finished only when its own criterion is met, never when the next one looks ready to start.
-4. **Review.** Run `code-review` against the fixed point. Done when every finding is fixed or explicitly handed to the user as deferred.
+4. **Review.** Run `code-review` against the fixed point, then `ponytail-review` over the same diff: one asks whether the code is correct, the other whether it should exist. Done when every finding is fixed or explicitly handed to the user as deferred.
 5. **Report**: what changed, which skills ran, what is left and why.
 
 ## Route
@@ -23,7 +25,9 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | an issue or external PR to classify | `triage` |
 | a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
-| behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets |
+| code that feels over-built | `ponytail-review` for a diff, `ponytail-audit` for the whole codebase |
+| "what did we agree to fix later" | `ponytail-debt` harvests the `ponytail:` comments into a ledger |
+| behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
 | React or Next.js code | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
 | something to drive in a browser or Electron app | `agent-browser` |
@@ -34,5 +38,5 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a fresh clone of this template, or a stack or Jira project that changed | `project-init` |
 | a capability nobody here has a skill for yet | `find-skills` |
 | the issue tracker or triage labels to switch | `setup-matt-pocock-skills` |
-| pre-commit formatting, type checks or tests to wire up | `setup-pre-commit` |
+| a container, pipeline, deployment, Git hook or anything else the code runs on | hand to the `devops` agent |
 | the end of a session | `handoff` for a successor; `retro` to improve this harness |

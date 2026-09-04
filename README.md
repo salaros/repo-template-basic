@@ -1,6 +1,6 @@
 # Basic repo template
 
-A starting point that does not assume a language or framework: `.gitignore`, `.gitattributes`, Git hooks, a folder layout with a README in every folder, and an AI-agnostic **agent harness** (skills, hook scripts, three agents) that works the same in Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and any other tool that reads `AGENTS.md` and `.agents/skills`.
+A starting point that does not assume a language or framework: `.gitignore`, `.gitattributes`, Git hooks, a folder layout with a README in every folder, and an AI-agnostic **agent harness** (skills, hook scripts, four agents) that works the same in Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and any other tool that reads `AGENTS.md` and `.agents/skills`.
 
 Requires **Node 18 or newer** (the only runtime the harness needs) and Git; nothing else. The [harness CI workflow](.github/workflows/harness.yml) runs the suite on Ubuntu and Windows.
 
@@ -74,9 +74,10 @@ Agent definitions live in `.agents/agents/*.md`: YAML frontmatter with `name` an
 | --- | --- |
 | `engineer` | Engineering tasks bigger than a one-line edit, and the ADR → SPEC → TDD → IPLAN → Code half of the documentation chain |
 | `business-analyst` | Requirements, process design, interface contracts, agent-ready briefs, the BRD → PRD → EARS → BDD half of the documentation chain |
+| `devops` | Containers, CI/CD, Kubernetes, infrastructure as code, rollouts and incidents |
 | `assistant` | Non-technical colleagues |
 
-Which skills each agent routes to is the \"Routed by\" column of the [Skills](#skills) table; the route tables themselves are in the agent files.
+Which skills an agent routes to is the route table in its own file; `node scripts/skills.js list` prints the same mapping from the other direction, one row per skill.
 
 ## Files per AI tool
 
