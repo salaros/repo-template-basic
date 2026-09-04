@@ -32,9 +32,14 @@ const fix = p => {
 };
 const real = p => { try { return fs.realpathSync(p); } catch { return p; } };
 
+// The project-dir variables a harness may set to say where the repo root is. root() checks these,
+// in order; test.js clears them before running a fixture, so a variable set on the developer's own
+// machine can't leak into a case that expects the checkout's own root.
+const ROOT_ENV_VARS = ["CLAUDE_PROJECT_DIR", "CURSOR_PROJECT_DIR", "GEMINI_PROJECT_DIR"];
+
 function root() {
     const here = real(checkout);
-    for (const v of ["CLAUDE_PROJECT_DIR", "CURSOR_PROJECT_DIR", "GEMINI_PROJECT_DIR"]) {
+    for (const v of ROOT_ENV_VARS) {
         const val = process.env[v];
         if (!val) continue;
         const dir = path.resolve(fix(val));
@@ -93,4 +98,4 @@ function commandText(j) {
     return found.join("\n");
 }
 
-module.exports = { checkout, warn, fix, root, payload, filePaths, commandText, ...scripts };
+module.exports = { checkout, warn, fix, root, ROOT_ENV_VARS, payload, filePaths, commandText, ...scripts };

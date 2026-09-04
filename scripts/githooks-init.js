@@ -4,10 +4,10 @@
 // picks up every change to them on pull; nothing is copied. Run once per clone.
 // Usage: node scripts/githooks-init.js
 const fs = require("fs");
-const path = require("path");
 const { spawnSync } = require("child_process");
+const lib = require("./lib");
 
-process.chdir(path.resolve(__dirname, ".."));
+lib.chdirRoot();
 const r = spawnSync("git", ["config", "core.hooksPath", ".githooks"], { stdio: "inherit" });
 if (r.status !== 0) process.exit(r.status === null ? 1 : r.status);
 console.log(`Git hooks: core.hooksPath = .githooks (${fs.readdirSync(".githooks").join(" ")})`);

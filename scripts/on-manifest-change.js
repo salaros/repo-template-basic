@@ -10,7 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const lib = require("./lib");
 
-process.chdir(path.resolve(__dirname, ".."));
+lib.chdirRoot();
 const dry = process.argv.includes("--dry-run");
 const changed = lib.stdin().split(/\r?\n/).filter(Boolean);
 if (!changed.length) { if (dry) console.log("nothing to restore"); process.exit(0); }

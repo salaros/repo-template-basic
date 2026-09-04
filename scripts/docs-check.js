@@ -11,9 +11,10 @@
 // Usage: node scripts/docs-check.js [docs-dir] [agents-file]   (defaults: docs, AGENTS.md)
 const fs = require("fs");
 const path = require("path");
+const lib = require("./lib");
 
 function check(root = "docs", agentsFile = "AGENTS.md") {
-    process.chdir(path.resolve(__dirname, ".."));
+    lib.chdirRoot();
     const problems = [];
     const say = (file, msg) => problems.push(`${file}: ${msg}`);
 

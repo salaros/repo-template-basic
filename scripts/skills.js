@@ -13,9 +13,9 @@
 //   node scripts/skills.js write            regenerate README's table between <!-- skills:start --> and <!-- skills:end -->
 const fs = require("fs");
 const path = require("path");
+const lib = require("./lib");
 
-const root = path.resolve(__dirname, "..");
-process.chdir(root);
+const root = lib.chdirRoot();
 const SKILLS = ".agents/skills", AGENTS = ".agents/agents", LOCK = "skills-lock.json", README = "README.md";
 const START = "<!-- skills:start -->", END = "<!-- skills:end -->";
 

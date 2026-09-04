@@ -15,7 +15,7 @@ const docsCheck = require("../../scripts/docs-check");
 const root = lib.checkout;
 process.chdir(root);
 const env = { ...process.env, HOOK_TEST: "1" };
-for (const v of ["CLAUDE_PROJECT_DIR", "CURSOR_PROJECT_DIR", "GEMINI_PROJECT_DIR"]) delete env[v];
+for (const v of lib.ROOT_ENV_VARS) delete env[v];
 const rootForFixtures = root.split(path.sep).join("/");
 
 let planted = null;
