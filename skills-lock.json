@@ -13,11 +13,29 @@
       "skillPath": "plugins/patterns/bdd/skills/bdd-scenarios/SKILL.md",
       "computedHash": "f16b0e8e672a23c96d79c5e44e84ceab5db41475dbfdceb2be34ed59f51ed7ee"
     },
+    "ci-cd-best-practices": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "ci-cd-best-practices/SKILL.md",
+      "computedHash": "28b1f37ee1815aef97f1c728ed1f16f054a0c3ee7adef17f11ab464ad9f4f4ae"
+    },
     "code-review": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/code-review/SKILL.md",
       "computedHash": "b4f17857c85ca60af1df7d0b623dd03c2a48419f6123e714f3d9748ca744a1bf"
+    },
+    "code-review-and-quality": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-and-quality/SKILL.md",
+      "computedHash": "6231479cc74c7ed70a5618b81b3f94034d9806c0319a1a23d15f9b94a368c581"
+    },
+    "code-simplification": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-simplification/SKILL.md",
+      "computedHash": "7973e746e8e2ea5004d520da970c15a106824b8d6be1bcff48908aec021f3677"
     },
     "codebase-design": {
       "source": "mattpocock/skills",
@@ -126,12 +144,6 @@
       "sourceType": "github",
       "skillPath": "skills/ponytail-debt/SKILL.md",
       "computedHash": "8e7448ee88cb22234f73d1b9b8ad5f815ee32bc33ada062281b9723a961e6d92"
-    },
-    "ponytail-review": {
-      "source": "dietrichgebert/ponytail",
-      "sourceType": "github",
-      "skillPath": "skills/ponytail-review/SKILL.md",
-      "computedHash": "d68b62a2fb83972ca8a9f7f20851baf6563bb7908bc81002214c6c1141486c25"
     },
     "prd": {
       "source": "github/awesome-copilot",
