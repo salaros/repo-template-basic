@@ -18,7 +18,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | --- | --- | --- |
    | What is the project called? | Name | A name usable as a heading and as a folder (`Acme Billing`) |
    | What does it do, in one sentence, for whom? | Purpose | One sentence with a subject, an outcome and a user |
-   | Where do the requirements live? | Requirements | A path, URL, Confluence page or Jira epic; `none yet` is allowed and means the `brd` skill runs next |
+   | Where do the requirements live? | Requirements | One or more sources, comma-separated: a repo-relative path that exists, a URL, or `jira:KEY-123`; `none yet` is allowed and means the `brd` skill runs next |
    | What kind of unit is it? | Unit type | Options: `library`, `cli`, `service`, `monolith`, `frontend` |
    | Which language? | Language | One language (`C#`, `TypeScript`, `Python`) |
    | Which runtime and package manager? | Runtime / package manager | Version included (`.NET 9 / NuGet`, `Node 22 / pnpm`, `Python 3.13 / uv`) |
@@ -81,6 +81,7 @@ The seven facts recorded, which files changed, the scaffold commands handed over
 ## Gotchas
 
 - Ask one question per turn: a single message with eight questions gets eight half-answers.
+- `Requirements` is checked by `node scripts/docs-check.js`, so a Confluence page goes in as its URL and an epic as `jira:AB-42`, not as prose. List several by separating them with commas. Once a BRD exists the line names the BRD instead, and the `brd` skill makes that swap.
 - The Jira key is upper case and the site a full URL; a lower-case key or a bare host name silently breaks the JQL in `issue-tracker.md`.
 - On an update, the old key must go everywhere in `issue-tracker.md`, including inside JQL strings and the `<KEY>-42` example; search for it before declaring the step done.
 - Change values through the skill, never by editing between the README markers: the next run replaces everything inside them.

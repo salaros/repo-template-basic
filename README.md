@@ -75,7 +75,7 @@ The table below is generated from the lock file, each skill's frontmatter and th
 | `improve-codebase-architecture` | `/improve-codebase-architecture` | engineer | mattpocock/skills |
 | `loop-me` | `/loop-me` | assistant, business-analyst, engineer | mattpocock/skills |
 | `prd` | by description | business-analyst | github/awesome-copilot |
-| `project-init` | `/project-init` | engineer | local |
+| `project-init` | `/project-init` | business-analyst, engineer | local |
 | `prototype` | by description | engineer | mattpocock/skills |
 | `retro` | `/retro` | engineer | mattpocock/skills |
 | `setup-matt-pocock-skills` | `/setup-matt-pocock-skills` | engineer | mattpocock/skills |

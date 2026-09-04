@@ -44,6 +44,95 @@ function docsCheckCitationEdgeCases(t) {
     t.ok(has("later in the chain"), "docs-check: citation later in the chain", detail);
 }
 
+// A throwaway doc tree: real stage folder names, so check() uses the real AGENTS.md chain, and a
+// unique OS-temp directory so two runs (a manual one and one the edit hook triggers) never collide.
+// Returns { write, run, clean }; run() gives back a helper that filters problems by file.
+function docTree() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-docs-check-"));
+    return {
+        dir,
+        write(rel, ...lines) {
+            const file = path.join(dir, rel);
+            fs.mkdirSync(path.dirname(file), { recursive: true });
+            fs.writeFileSync(file, lines.join("\n") + "\n");
+        },
+        run(memoryFile) {
+            const { problems } = docsCheck.check(dir, "AGENTS.md", memoryFile || path.join(dir, "no-memory-here.md"));
+            return {
+                all: problems.join("\n") || "(none)",
+                for: rel => problems.filter(p => p.startsWith(path.join(dir, rel).split(path.sep).join("/"))),
+            };
+        },
+        clean: () => fs.rmSync(dir, { recursive: true, force: true }),
+    };
+}
+
+// Every document says where it came from. Where the chain holds nothing earlier that is a source:
+// a URL, an existing repo-relative path, or a Jira key. A missing line, a line naming nothing, and
+// a path that does not exist are each their own message.
+function docsCheckDerivedFromShapes(t) {
+    const tree = docTree();
+    tree.write("brd/9100-url.md", "# BRD-9100: Url", "", "**Derived from:** https://example.com/brief");
+    tree.write("brd/9101-jira.md", "# BRD-9101: Jira", "", "**Derived from:** jira:ABC-123");
+    tree.write("brd/9102-path.md", "# BRD-9102: Path", "", "**Derived from:** .scratch/README.md");
+    tree.write("brd/9103-absent.md", "# BRD-9103: Absent");
+    tree.write("brd/9104-words.md", "# BRD-9104: Words", "", "**Derived from:** the whiteboard");
+    tree.write("brd/9105-gone.md", "# BRD-9105: Gone", "", "**Derived from:** docs/nowhere/missing.md");
+    const r = tree.run();
+    tree.clean();
+    for (const ok of ["brd/9100-url.md", "brd/9101-jira.md", "brd/9102-path.md"])
+        t.ok(r.for(ok).length === 0, `docs-check: ${ok} derives from a valid source`, r.all);
+    t.ok(r.for("brd/9103-absent.md").some(p => p.includes("missing a")), "docs-check: no Derived from line at all", r.all);
+    t.ok(r.for("brd/9104-words.md").some(p => p.includes("names no reference")), "docs-check: Derived from names nothing", r.all);
+    t.ok(r.for("brd/9105-gone.md").some(p => p.includes("does not exist")), "docs-check: Derived from names a path that is not there", r.all);
+}
+
+// A source stands in for an upstream document only while nothing earlier exists. Once it does, the
+// line must cite it — except on an ADR, which is cross-cutting and cites in either direction.
+function docsCheckSourceAndAdrExemption(t) {
+    const tree = docTree();
+    tree.write("brd/9200-real.md", "# BRD-9200: Real", "", "**Derived from:** https://example.com/brief");
+    tree.write("prd/9200-stale.md", "# PRD-9200: Stale", "", "**Derived from:** https://example.com/brief");
+    tree.write("adr/9200-forced.md", "# ADR-9200: Forced", "", "**Derived from:** https://example.com/rfc");
+    tree.write("spec/9200-design.md", "# SPEC-9200: Design", "", "**Derived from:** BRD-9200");
+    tree.write("adr/9201-late.md", "# ADR-9201: Late", "", "**Derived from:** SPEC-9200");
+    tree.write("prd/9201-decided.md", "# PRD-9201: Decided", "", "**Derived from:** BRD-9200", "", "Constrained by ADR-9200.");
+    const r = tree.run();
+    tree.clean();
+    t.ok(r.for("prd/9200-stale.md").some(p => p.includes("cite the upstream document instead")),
+        "docs-check: source-only line once an upstream document exists", r.all);
+    t.ok(r.for("adr/9200-forced.md").length === 0, "docs-check: an ADR may derive from a source at any time", r.all);
+    t.ok(r.for("adr/9201-late.md").length === 0, "docs-check: an ADR may cite a later stage", r.all);
+    t.ok(r.for("prd/9201-decided.md").length === 0, "docs-check: any document may cite an ADR", r.all);
+}
+
+// MEMORY.md's Requirements takes part in traceability, so it follows the same reference rule.
+function docsCheckMemoryRequirements(t) {
+    const tree = docTree();
+    tree.write("brd/9300-real.md", "# BRD-9300: Real", "", "**Derived from:** https://example.com/brief");
+    const memory = (name, ...lines) => {
+        const file = path.join(tree.dir, name);
+        fs.writeFileSync(file, lines.join("\n") + "\n");
+        const { problems } = docsCheck.check(tree.dir, "AGENTS.md", file);
+        return problems.filter(p => p.startsWith(file.split(path.sep).join("/")) || p.startsWith(file));
+    };
+    const cases = [
+        ["none yet", ["# Project", "", "- **Requirements:** none yet"], 0, ""],
+        ["a document that exists", ["- **Requirements:** BRD-9300"], 0, ""],
+        ["several sources", ["- **Requirements:** https://example.com/a, jira:ABC-1"], 0, ""],
+        ["a document that does not exist", ["- **Requirements:** BRD-9999"], 1, "does not exist"],
+        ["prose instead of a reference", ["- **Requirements:** the whiteboard"], 1, "is not a document ID"],
+        ["no Requirements line", ["# Project", "", "- **Stack:** none yet"], 1, "no Requirements line"],
+    ];
+    for (const [title, lines, want, needle] of cases) {
+        const problems = memory("memory.md", ...lines);
+        const detail = problems.join("\n") || "(none)";
+        t.ok(want === 0 ? problems.length === 0 : problems.some(p => p.includes(needle)),
+            `docs-check: MEMORY.md Requirements, ${title}`, detail);
+    }
+    tree.clean();
+}
+
 // root() must actually follow a harness's project-dir variable, not just fall back to this
 // checkout — the one branch no TSV fixture exercises, since they all run with these variables
 // cleared. Points CLAUDE_PROJECT_DIR at an unrelated directory with its own MEMORY.md and checks
@@ -57,4 +146,11 @@ function sessionStartFollowsProjectDir(t, env) {
         "session-start.js follows CLAUDE_PROJECT_DIR", r.output);
 }
 
-module.exports = [rosterIsConsistent, docsCheckCitationEdgeCases, sessionStartFollowsProjectDir];
+module.exports = [
+    rosterIsConsistent,
+    docsCheckCitationEdgeCases,
+    docsCheckDerivedFromShapes,
+    docsCheckSourceAndAdrExemption,
+    docsCheckMemoryRequirements,
+    sessionStartFollowsProjectDir,
+];

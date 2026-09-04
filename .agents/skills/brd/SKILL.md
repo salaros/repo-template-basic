@@ -11,10 +11,11 @@ Read `CONTEXT.md` first if it exists and use its terms. Read any earlier documen
 
 ## Steps
 
-1. **Interview.** Use the `grilling` skill on the business need: who is asking, what pain or opportunity, what changes for the business when it is solved, how that change will be measured, what is explicitly out of scope, who has to agree. Done when every section below can be filled with a specific sentence, not a placeholder.
+1. **Interview.** Use the `grilling` skill on the business need: who is asking, what pain or opportunity, what changes for the business when it is solved, how that change will be measured, what is explicitly out of scope, who has to agree. Write the questions and the answers to `.scratch/<slug>/interview.md` as you go, since that file is the source this BRD derives from. Done when every section below can be filled with a specific sentence, not a placeholder.
 2. **Draft** the document at `docs/brd/NNNN-<slug>.md`, numbered after the highest existing file, using the template below. Done when every success factor is measurable and every business requirement is traceable to one of them.
 3. **Confirm** with the user, section by section, and fix what they change. Done when they say the document is agreed; then record that in `Status`.
-4. **Hand off**: tell the user the PRD can now be derived with the `prd` skill from this file.
+4. **Point `MEMORY.md` at it.** Its `Requirements` line named where requirements lived before this document existed; replace that with this BRD's ID, so the chain, not the source, is the entry point from here on. Done when `node scripts/docs-check.js` is clean.
+5. **Hand off**: tell the user the PRD can now be derived with the `prd` skill from this file.
 
 ## Template
 
@@ -23,7 +24,7 @@ Read `CONTEXT.md` first if it exists and use its terms. Read any earlier documen
 
 **Status:** draft | agreed | superseded by BRD-NNNN
 **Owner:** <business owner>
-**Derived from:** <vision, strategy, or request that seeded this, or "none">
+**Derived from:** <the source this came from: .scratch/<slug>/interview.md, a URL, or jira:KEY-123>
 
 ## Overview
 <One paragraph: the business situation and the opportunity or problem.>
@@ -51,6 +52,7 @@ Read `CONTEXT.md` first if it exists and use its terms. Read any earlier documen
 
 ## Quality bar
 
+- `**Derived from:**` names a real source, never "none": a repo-relative path that exists, a URL, or a Jira key. A BRD that came out of a conversation cites the interview file, so the reasoning behind it survives the session.
 - Every requirement says what the business needs, never how the product does it. "Customers can settle an invoice without calling support" belongs here; "add a Pay Now button" belongs in the PRD.
 - Every success factor has a number, a baseline where one exists, and a date.
 - The Out-of-scope list is as long as the In list; silence there is where later stages go wrong.

@@ -2,11 +2,15 @@
 
 Everything written about this project before and beside its code lives here, one folder per stage of the chain in `AGENTS.md` ("Documentation"). That table is the only list of stages, folders and skills; this file says what each document is for and what it must contain. `node scripts/docs-check.js` verifies that the folders, IDs and citations agree with the table.
 
-Every document is `docs/<stage>/NNNN-<slug>.md`, its ID is `<STAGE>-NNNN`, its first heading is `# <STAGE>-NNNN: <title>`, and from the PRD on it carries a `**Derived from:**` line citing the document(s) upstream. Items a later stage will refine start their line with a short ID (`BR-2`, `FR-3`, `AC-1`, `### D-1`), and later documents cite them as `DOC-ID/ITEM`.
+Every document is `docs/<stage>/NNNN-<slug>.md`, its ID is `<STAGE>-NNNN`, its first heading is `# <STAGE>-NNNN: <title>`, and it carries a `**Derived from:**` line naming at least one reference. Items a later stage will refine start their line with a short ID (`BR-2`, `FR-3`, `AC-1`, `### D-1`), and later documents cite them as `DOC-ID/ITEM`.
+
+A reference is an upstream document ID, or a **source**: a URL, a repo-relative path that exists, or `jira:KEY-123`. A source stands in for an upstream document only while the chain holds nothing earlier, so the first document written may name one and every later document cites the chain. An ADR is the exception at both ends: it may cite a source or any document at any time, and any document may cite it.
 
 ## BRD, Business Requirements Document
 
 **Why** the business wants it, and how it will know it worked. No solution: no features, screens or technology.
+
+As the chain's first document it derives from a source: the brief, the ticket, the deck it came from. Requirements gathered in conversation are a source too, once written down: `brd` saves the interview as `.scratch/<slug>/interview.md` and the BRD derives from that path. `MEMORY.md`'s `Requirements` then points at the BRD.
 
 Contains: overview of the situation, objectives in the business's words, measurable success factors (`SF-n`, each with a number and a date), scope in and out, stakeholders, business requirements (`BR-n`, each tied to a success factor), assumptions and constraints. The `brd` skill writes it.
 
@@ -15,6 +19,8 @@ Contains: overview of the situation, objectives in the business's words, measura
 **What** the product does, for whom. Turns the business requirements into a product: users, journeys, features, functional and non-functional requirements, scope and constraints.
 
 Contains: purpose and objectives citing `BRD-NNNN/BR-n`, user stories, functional requirements (`FR-n`), non-functional requirements (`NFR-n`), out of scope, open questions. The `prd` skill writes it.
+
+A prototype skips the BRD, so its PRD derives from a source instead. Writing a BRD later makes that PRD wrong: it must then cite the BRD, and the validator says so.
 
 ## EARS, requirements as "shall" statements
 
@@ -29,6 +35,8 @@ Contains: purpose and objectives citing `BRD-NNNN/BR-n`, user stories, functiona
 **A decision that is hard to reverse**, recorded once, immutable after acceptance. One decision per file.
 
 Contains: title, status (proposed, accepted, deprecated, superseded by ADR-NNNN), context including the requirements that force the choice, the decision, alternatives considered, consequences. The `domain-modeling` skill writes it; `CONTEXT.md` holds the vocabulary the decisions use.
+
+An ADR is cross-cutting, because a decision can be forced before the chain starts or halfway through implementation. It derives from whatever forced it, a source or any document, and a later ADR that replaces one cites it as superseded.
 
 ## SPEC, technical design
 

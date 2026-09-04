@@ -7,13 +7,33 @@
 // not fit, a skill named in the table that is not under .agents/skills/, and then, per document:
 // the ID its file name gives it, the upstream documents it was derived from, and every citation
 // (DOC-ID or DOC-ID/ITEM) pointing backwards along the chain to something that exists.
+// Every document carries a "Derived from:" line naming at least one reference: an upstream
+// document, or a source (a URL, a repo-relative path that exists, or jira:KEY-123). A source
+// stands in for an upstream document only while the chain holds nothing earlier; an ADR may
+// always cite one, and is exempt from the backwards-only rule in both directions. MEMORY.md's
+// Requirements line follows the same reference rule, or says "none yet".
 // Prints one line per problem and exits 1 when there are any. The edit hook requires check().
-// Usage: node scripts/docs-check.js [docs-dir] [agents-file]   (defaults: docs, AGENTS.md)
+// Usage: node scripts/docs-check.js [docs-dir] [agents-file] [memory-file]
+//        (defaults: docs, AGENTS.md, MEMORY.md)
 const fs = require("fs");
 const path = require("path");
 const lib = require("./lib");
 
-function check(root = "docs", agentsFile = "AGENTS.md") {
+const SOURCE_HELP = "a URL, a repo-relative path that exists, or jira:KEY-123";
+const looksLikePath = token => /^[\w.][\w./-]*$/.test(token) && token.includes("/");
+// A source is the non-chain thing a document derives from. Only a path can be verified here;
+// a URL and a Jira key are checked for shape, since neither can be followed.
+const isSource = token =>
+    /^https?:\/\/\S+$/i.test(token)
+    || /^jira:[A-Za-z][A-Za-z0-9]*-\d+$/.test(token)
+    || (looksLikePath(token) && fs.existsSync(token));
+// "**Derived from:** x, y" -> ["x", "y"], with surrounding punctuation stripped.
+const referenceTokens = line => line.replace(/^\**Derived from:?\**:?/i, "")
+    .split(/[\s,;]+/).filter(Boolean)
+    .map(t => t.replace(/^[("'<[]+|[)"'>\].]+$/g, ""))
+    .filter(Boolean);
+
+function check(root = "docs", agentsFile = "AGENTS.md", memoryFile = "MEMORY.md") {
     lib.chdirRoot();
     const problems = [];
     const say = (file, msg) => problems.push(`${file}: ${msg}`);
@@ -72,24 +92,61 @@ function check(root = "docs", agentsFile = "AGENTS.md") {
     }
 
     // 3. Check each document
-    const first = chain[0];
     for (const [id, d] of docs) {
         const lines = d.text.split(/\r?\n/);
         const h1 = lines.find(l => l.startsWith("# "));
         if (!h1) say(d.file, "no level-1 heading");
         else if (!h1.startsWith(`# ${id}:`)) say(d.file, `first heading must start with "# ${id}:" (found "${h1.slice(0, 40)}")`);
 
+        // Every document says where it came from: an upstream document, or a source.
         const derived = lines.find(l => /^\**Derived from:?\**:?/i.test(l));
-        if (!derived) { if (d.stage !== first) say(d.file, "missing a \"**Derived from:**\" line citing upstream document IDs"); }
-        else if (d.stage !== first && !new RegExp(`(${prefixes.join("|")})-\\d{4}`).test(derived)) say(d.file, "\"Derived from:\" cites no document ID");
+        if (!derived) say(d.file, `missing a "**Derived from:**" line naming an upstream document or a source (${SOURCE_HELP})`);
+        else {
+            const tokens = referenceTokens(derived);
+            const cites = [...derived.matchAll(refRe)].map(m => `${m[1]}-${m[2]}`).filter(c => c !== id);
+            const sources = tokens.filter(isSource);
+            const brokenPath = tokens.find(t => looksLikePath(t) && !fs.existsSync(t));
+            if (!cites.length && !sources.length) {
+                const why = brokenPath ? `; ${brokenPath} does not exist` : "";
+                say(d.file, `"Derived from:" names no reference: cite an upstream document, or a source (${SOURCE_HELP})${why}`);
+            } else if (!cites.length && d.stage !== "adr") {
+                // A source stands in for an upstream document only while there is nothing earlier
+                // to cite. An ADR is cross-cutting, so this never applies to it.
+                const earlier = [...docs].find(([, o]) => rank[o.stage] < rank[d.stage]);
+                if (earlier) say(d.file, `"Derived from:" names only a source, but ${earlier[0]} exists; cite the upstream document instead`);
+            }
+        }
 
         for (const [ref, stage, num, item] of d.text.matchAll(refRe)) {
             const docId = `${stage}-${num}`;
             if (docId === id) continue;
             const target = docs.get(docId);
             if (!target) { say(d.file, `cites ${ref} but ${docId} does not exist`); continue; }
-            if (rank[target.stage] > rank[d.stage]) say(d.file, `cites ${ref}, which is later in the chain (${target.stage} after ${d.stage})`);
+            // An ADR records a decision forced at any point, so it cites, and is cited, in
+            // either direction; every other pair points backwards along the chain.
+            const crossCutting = d.stage === "adr" || target.stage === "adr";
+            if (!crossCutting && rank[target.stage] > rank[d.stage]) say(d.file, `cites ${ref}, which is later in the chain (${target.stage} after ${d.stage})`);
             if (item && !target.items.has(item)) say(d.file, `cites ${ref} but ${target.file} has no item ${item}`);
+        }
+    }
+
+    // 4. MEMORY.md's Requirements takes part in traceability once a BRD exists, so it follows the
+    // same reference rule: sources, document IDs, or "none yet".
+    if (fs.existsSync(memoryFile)) {
+        const line = fs.readFileSync(memoryFile, "utf8").split(/\r?\n/).find(l => /^\s*[-*]?\s*\**Requirements:?\**:?/i.test(l));
+        if (!line) say(memoryFile, "no Requirements line (the project-init skill writes one)");
+        else {
+            const value = line.replace(/^\s*[-*]?\s*\**Requirements:?\**:?/i, "").trim();
+            if (!/^none yet\b/i.test(value)) {
+                for (const entry of value.split(",").map(s => s.trim()).filter(Boolean)) {
+                    const token = entry.split(/\s+/)[0].replace(/^[("'<[]+|[)"'>\].]+$/g, "");
+                    if (new RegExp(`^(${prefixes.join("|") || "NONE"})-\\d{4}$`).test(token)) {
+                        if (!docs.has(token)) say(memoryFile, `Requirements names ${token}, which does not exist`);
+                    } else if (!isSource(token)) {
+                        say(memoryFile, `Requirements entry "${entry}" is not a document ID, a source (${SOURCE_HELP}), or "none yet"`);
+                    }
+                }
+            }
         }
     }
 

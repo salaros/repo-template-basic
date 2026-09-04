@@ -9,17 +9,20 @@ Decisions belong to the user; facts are yours to find. Look things up before ask
 
 ## Steps
 
-1. **Ground.** Read `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and any ADRs under `docs/adr/` near the topic. Done when you can use the project's own terms for the ask, or have confirmed no glossary exists yet.
+1. **Ground.** Read `MEMORY.md` for what the project is and where its requirements live, then `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and any ADRs under `docs/adr/` near the topic. Done when you can use the project's own terms for the ask, or have confirmed no glossary exists yet.
 2. **Route.** Pick every row of the table below that matches, in table order. Done when the skills you will run are listed.
 3. **Run** them in that order. Each skill carries its own definition of done; a skill is finished only when its own criterion is met, never when the next one looks ready to start.
 4. **Deliver** the artefact the skill produces (glossary and ADR entries, tickets, workflow specs, lessons) and say where it lives. Done when an engineer or agent could pick it up without asking you a question.
+
+Every document carries a `**Derived from:**` line, the BRD included. Where the chain holds nothing earlier it names a source instead: a URL, a repo-relative path that exists, or `jira:KEY-123`. Adding a document behind an existing one makes the older line wrong, so run `docs-check` and follow what it says. The rules are in `AGENTS.md` ("Documentation").
 
 ## Route
 
 | The ask is… | Skill(s) |
 | --- | --- |
-| a request, problem or idea that is not yet sharp | `grilling`; use `grill-with-docs` (grilling plus `domain-modeling`) when terms and decisions should be recorded as they land |
-| a document of the chain in `AGENTS.md` to write: BRD, PRD, EARS, BDD | `brd`, `prd`, `feature-forge`, `bdd-scenarios`, in that order and each derived from the one before; `docs-check` after each |
+| a repo this template has not been configured for yet, with no `MEMORY.md` | `project-init`, before any document |
+| a request, problem or idea that is not yet sharp | `grilling`; use `grill-with-docs` (grilling plus `domain-modeling`) when terms and decisions should be recorded as they land. Write the interview to `.scratch/<slug>/interview.md`, since a document derived from a conversation cites that file |
+| a document of the chain in `AGENTS.md` to write: BRD, PRD, EARS, BDD | `brd`, `prd`, `feature-forge`, `bdd-scenarios`, in that order, each derived from the one before and the first from a source; `docs-check` after each |
 | a contract to shape between teams, systems or modules | `codebase-design`, including its design-it-twice reference for comparing alternatives |
 | a settled plan to break into work for engineers or agents | `to-tickets` |
 | a recurring process to specify so it can be delegated | `loop-me` |

@@ -7,7 +7,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 
 ## Steps
 
-1. **Ground.** Read `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and the ADRs under `docs/adr/` that touch the area. Done when you can name the domain terms the task uses, or have confirmed no glossary exists yet.
+1. **Ground.** Read `MEMORY.md` for the project's stack and where its requirements live, then `CONTEXT.md` (or `CONTEXT-MAP.md` and the `CONTEXT.md` it points to) and the ADRs under `docs/adr/` that touch the area. Done when you can name the domain terms the task uses, or have confirmed no glossary exists yet.
 2. **Route.** Pick every row of the table below that matches the request, in table order. Done when the skills you will run are listed, with the fixed point (commit or branch) the work starts from noted for the review.
 3. **Run** the skills in that order. Each skill carries its own definition of done; a skill is finished only when its own criterion is met, never when the next one looks ready to start.
 4. **Review.** Run `code-review` against the fixed point. Done when every finding is fixed or explicitly handed to the user as deferred.
@@ -21,7 +21,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a state model or UI question cheaper to build than to argue | `prototype` |
 | a settled plan that needs breaking into work | `to-tickets` |
 | an issue or external PR to classify | `triage` |
-| a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent |
+| a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
 | behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets |
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
