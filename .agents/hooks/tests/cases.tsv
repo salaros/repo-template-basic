@@ -1,18 +1,25 @@
-check-edit.sh	claude-vendored-relative.json	2	vendored skill edited via a repo-relative path is refused
-check-edit.sh	claude-vendored-absolute.json	2	vendored skill edited via an absolute path is refused
-check-edit.sh	claude-vendored-via-link.json	2	vendored skill edited through the .claude/skills link is refused
-check-edit.sh	claude-local-skill.json	0	a local skill may be edited
-check-edit.sh	cursor-vendored.json	2	Cursor afterFileEdit puts file_path at the top level
-check-edit.sh	copilot-vendored.json	2	Copilot sends toolArgs as a JSON string with a path key
-check-edit.sh	claude-outside-repo.json	0	a file outside the repo is skipped
-check-edit.sh	not-json.txt	0	an unreadable payload fails open
-check-edit.sh	claude-no-path.json	0	a payload with no file path is ignored
-check-edit.sh	claude-bad-doc.json	2	a chain document with a wrong heading fails docs-check
-check-edit.sh	claude-good-sh.json	0	a valid shell script passes
-guard-command.sh	guard-force-push.json	2	force push is blocked
-guard-command.sh	guard-safe.json	0	force-with-lease is allowed
-session-start.sh	empty.json	0	session brief always exits 0
-check-edit.sh	claude-agents-md.json	0	editing AGENTS.md runs docs-check, whose table it holds
-check-edit.sh	claude-docs-readme.json	0	a non-chain Markdown file under docs/ passes docs-check
-check-edit.sh	claude-agent-file.json	0	editing a route table runs the skills check
-check-edit.sh	claude-lock.json	0	editing the lock runs the skills check
+# script and args	fixture	expected exit	setup	expected output	note
+.agents/hooks/check-edit.sh	claude-vendored-relative.json	2	-	vendored skill	vendored skill edited via a repo-relative path is refused
+.agents/hooks/check-edit.sh	claude-vendored-absolute.json	2	-	vendored skill	vendored skill edited via an absolute path is refused
+.agents/hooks/check-edit.sh	claude-vendored-via-link.json	2	-	vendored skill	vendored skill edited through the .claude/skills link is refused
+.agents/hooks/check-edit.sh	claude-local-skill.json	0	-	-	a local skill may be edited
+.agents/hooks/check-edit.sh	cursor-vendored.json	2	-	vendored skill	Cursor afterFileEdit puts file_path at the top level
+.agents/hooks/check-edit.sh	copilot-vendored.json	2	-	vendored skill	Copilot sends toolArgs as a JSON string with a path key
+.agents/hooks/check-edit.sh	claude-outside-repo.json	0	-	-	a file outside the repo is skipped
+.agents/hooks/check-edit.sh	not-json.txt	0	-	not JSON	an unreadable payload fails open and says so
+.agents/hooks/check-edit.sh	claude-no-path.json	0	-	no file path	a payload with no file path is ignored and says so
+.agents/hooks/check-edit.sh	claude-bad-doc.json	2	plant docs/brd/9999-hook-test.md # Wrong heading	first heading must start with	a chain document with a wrong heading fails docs-check
+.agents/hooks/check-edit.sh	claude-good-sh.json	0	-	-	a valid shell script passes
+.agents/hooks/check-edit.sh	claude-agents-md.json	0	-	-	editing AGENTS.md runs docs-check, whose table it holds
+.agents/hooks/check-edit.sh	claude-docs-readme.json	0	-	-	a non-chain Markdown file under docs/ passes docs-check
+.agents/hooks/check-edit.sh	claude-agent-file.json	0	-	-	editing a route table runs the skills check
+.agents/hooks/check-edit.sh	claude-lock.json	0	-	-	editing the lock runs the skills check
+.agents/hooks/guard-command.sh	guard-force-push.json	2	-	blocked this command	force push is blocked
+.agents/hooks/guard-command.sh	guard-safe.json	0	-	-	force-with-lease is allowed
+.agents/hooks/session-start.sh	empty.json	0	-	branch:	session brief always exits 0
+scripts/on-manifest-change.sh --dry-run	paths-lock.txt	0	-	would run: sh scripts/skills-install.sh	a changed skills lock restores the skills
+scripts/on-manifest-change.sh --dry-run	paths-package-json.txt	0	-	nothing to restore	package.json alone restores nothing while no lock file exists
+scripts/on-manifest-change.sh --dry-run	paths-package-json.txt	0	plant package-lock.json {}	would run: npm install	package.json restores npm when package-lock.json exists
+scripts/on-manifest-change.sh --dry-run	paths-csproj.txt	0	-	would run: dotnet restore	a nested project file restores NuGet
+scripts/on-manifest-change.sh --dry-run	paths-none.txt	0	-	nothing to restore	unrelated files restore nothing
+scripts/on-manifest-change.sh --dry-run	paths-empty.txt	0	-	nothing to restore	an empty change list restores nothing

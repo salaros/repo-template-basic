@@ -8,7 +8,7 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 2. Clone, then install the Git hooks once: `sh scripts/githooks-init.sh`
 3. Run the `project-init` skill (`/project-init` in Claude Code). It asks, through the tool's own question prompt, what the project is, where the requirements live, the stack and the Jira project, and writes the answers to `MEMORY.md`, this README and `docs/agents/issue-tracker.md`. It hands you the scaffold commands for the stack; running them is up to you.
 4. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code codex -y`, then `sh scripts/skills-relink.sh`, then commit.
-5. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#mcp-servers)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
+5. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#files-per-ai-tool)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
 
 ## Layout
 
@@ -23,7 +23,7 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 | `.agents/hooks/` | Harness-neutral hook scripts (see [Hooks](#hooks)). |
 | `.agents/agents/` | Agent definitions (see [Agents](#agents)). |
 | `.claude/` | Claude Code wiring: `skills/*` and `agents` are symlinks into `.agents/`, `settings.json` wires the hooks. |
-| `.githooks/`, `scripts/githooks-init.sh` | Git hooks (post-merge reinstalls dependencies and skills when their manifests change). |
+| `.githooks/`, `scripts/githooks-init.sh` | Git hooks, run through `core.hooksPath` after `githooks-init.sh` is run once per clone. `post-merge` pipes the changed files into `scripts/on-manifest-change.sh`, which restores what `scripts/stacks.tsv` says (skills, npm, pnpm, yarn, NuGet, uv); `--dry-run` shows what it would do. |
 | `docs/agents/` | Per-repo configuration the skills read: issue tracker, triage labels, domain-doc rules. |
 | `CODING_STANDARDS.md` | Rules the `code-review` skill applies to a diff. A stub until the stack lands; anything a tool enforces stays out of it. |
 | `.editorconfig`, `.gitattributes`, `.gitignore`, `stylecop.json` | Encoding, indentation, line endings, ignored output and analyzer settings. Stack-specific entries are kept when they are inert on other stacks, so no stack is forced. |
@@ -101,7 +101,7 @@ Three POSIX `sh` scripts in `.agents/hooks/`. Each reads the harness's JSON payl
 
 The scripts are harness-neutral; the wiring is one small config file per tool, listed under [Files per AI tool](#files-per-ai-tool). Only the Claude Code wiring ships in the repo, because it is the one that has been run.
 
-`lib.sh` (with `payload.js` for the JSON) is the one place that knows how a harness hands over its payload: it finds the repo root (`CLAUDE_PROJECT_DIR`, `CURSOR_PROJECT_DIR` or `GEMINI_PROJECT_DIR`, else the checkout the hooks live in) and turns the edited path into a repo-relative one whether the harness sent `tool_input.file_path` (Claude Code, Gemini CLI), a top-level `file_path` (Cursor) or a `toolArgs` string with a `path` (Copilot). Paths outside the repo and unreadable payloads are skipped with a note on stderr, never blocked. `sh .agents/hooks/test.sh` pipes every fixture in `.agents/hooks/tests/` through its hook and compares exit codes; `check-edit.sh` runs that suite itself whenever a hook changes.
+`lib.sh` (with `payload.js` for the JSON) is the one place that knows how a harness hands over its payload: it finds the repo root (`CLAUDE_PROJECT_DIR`, `CURSOR_PROJECT_DIR` or `GEMINI_PROJECT_DIR`, else the checkout the hooks live in) and turns the edited path into a repo-relative one whether the harness sent `tool_input.file_path` (Claude Code, Gemini CLI), a top-level `file_path` (Cursor) or a `toolArgs` string with a `path` (Copilot). Paths outside the repo and unreadable payloads are skipped with a note on stderr, never blocked. `sh .agents/hooks/test.sh` pipes every fixture in `.agents/hooks/tests/` through its script (a hook, or `scripts/on-manifest-change.sh --dry-run`) and compares exit code and output; `check-edit.sh` runs that suite itself whenever a hook, the Git hook or the stack table changes.
 
 ## Agents
 
@@ -115,24 +115,9 @@ Agent definitions live in `.agents/agents/*.md`: YAML frontmatter with `name` an
 
 Which skills each agent routes to is the \"Routed by\" column of the [Skills](#skills) table; the route tables themselves are in the agent files.
 
-Three skill names have been renamed upstream since they were first published: `to-issues` is now `to-tickets`, `design-an-interface` is now `codebase-design`, and `write-a-skill` is now `writing-for-agents`. The agents use the current names.
-
-## MCP servers
-
-The skills reach Jira through the Atlassian Rovo MCP server at `https://mcp.atlassian.com/v2/mcp` (streamable HTTP, OAuth sign-in on first use). Every tool registers MCP servers in its own file and none of them reads another tool's, so the registration is repeated per tool:
-
-| Tool | File | In repo |
-| --- | --- | --- |
-| Claude Code | `.mcp.json` → `{"mcpServers": {"atlassian": {"type": "http", "url": …}}}` | yes |
-| OpenCode | `opencode.json` → `{"mcp": {"atlassian": {"type": "remote", "url": …, "enabled": true}}}` | yes |
-| Cursor | `.cursor/mcp.json`, same `mcpServers` shape as `.mcp.json` without `type` | create (a symlink to `.mcp.json` should work, unverified) |
-| Codex | `.codex/config.toml` → `[mcp_servers.atlassian]` / `url = "…"`, then `codex mcp login atlassian` | create |
-| Copilot in VS Code | `.vscode/mcp.json` → `{"servers": {"atlassian": {"type": "http", "url": …}}}` | create |
-| Gemini CLI | `.gemini/settings.json` → `{"mcpServers": {"atlassian": {"httpUrl": …}}}` | create |
-
 ## Files per AI tool
 
-What each tool reads, what is already in the repo, and what you must create for that tool. Paths are relative to the repo root.
+What each tool reads, what is already in the repo, and what you must create for that tool. Paths are relative to the repo root. Only the Claude Code wiring has been run; the other rows come from each tool's own documentation.
 
 ### Claude Code
 
@@ -146,103 +131,18 @@ What each tool reads, what is already in the repo, and what you must create for 
 
 Invoke an agent with "use the engineer agent to …", or a skill with `/tdd`, `/grilling`, and so on. On Windows the symlinks need Developer Mode and `core.symlinks=true` (see Getting started); if you cannot use symlinks, run `npx skills add … --copy` and copy `.agents/agents/*.md` into `.claude/agents/`.
 
-### OpenAI Codex
-
-| Need | File | In repo |
-| --- | --- | --- |
-| Instructions | `AGENTS.md` (read natively, from the Git root down to the working directory) | yes |
-| Skills | `.agents/skills/` (read natively); the optional `agents/openai.yaml` inside a skill folder holds display name and invocation policy | yes |
-| Hooks | `.codex/hooks.json` (same shape as Claude Code's) | create |
-| Agents | `.codex/agents/engineer.toml` (one per agent) | create |
-
-```json
-{
-  "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "sh .agents/hooks/session-start.sh", "timeout": 20 }] }],
-    "PreToolUse":   [{ "hooks": [{ "type": "command", "command": "sh .agents/hooks/guard-command.sh", "timeout": 10 }] }],
-    "PostToolUse":  [{ "hooks": [{ "type": "command", "command": "sh .agents/hooks/check-edit.sh",    "timeout": 30 }] }]
-  }
-}
-```
-
-```toml
-# .codex/agents/engineer.toml
-name = "engineer"
-description = "Works an engineering task end to end through this repo's skills."
-developer_instructions = """
-(paste the body of .agents/agents/engineer.md, below the frontmatter)
-"""
-```
-
-Codex tool names in `matcher` were not verified, so the snippet matches every tool; the guard only acts on payloads that contain a shell command.
-
-### Cursor
-
-| Need | File | In repo |
-| --- | --- | --- |
-| Instructions | `AGENTS.md` (read natively); `.cursor/rules/*.mdc` for path-scoped rules | yes |
-| Skills | `.agents/skills/` (read natively, alongside `.cursor/skills/`) | yes |
-| Hooks | `.cursor/hooks.json` | create |
-| Agents | `.cursor/agents/<name>.md`, same frontmatter as `.agents/agents/*.md`: copy or symlink the files | create |
-
-```json
-{
-  "version": 1,
-  "hooks": {
-    "sessionStart":         [{ "command": "sh .agents/hooks/session-start.sh", "timeout": 20 }],
-    "beforeShellExecution": [{ "command": "sh .agents/hooks/guard-command.sh", "timeout": 10 }],
-    "afterFileEdit":        [{ "command": "sh .agents/hooks/check-edit.sh",    "timeout": 30 }]
-  }
-}
-```
-
-Cursor decides on a shell command from JSON the hook prints, not from its exit code, so the guard's block may only surface as a message there. Not verified.
-
-### GitHub Copilot
-
-| Need | File | In repo |
-| --- | --- | --- |
-| Instructions | `AGENTS.md` (read natively); `.github/copilot-instructions.md` for Copilot-only notes | yes |
-| Skills | `.agents/skills/` (read natively, alongside `.github/skills/` and `.claude/skills/`) | yes |
-| Hooks | `.github/hooks/harness.json` on the default branch | create |
-| Agents | `.github/agents/<name>.agent.md`: copy of `.agents/agents/<name>.md` with the `.agent.md` suffix | create |
-
-```json
-{
-  "version": 1,
-  "hooks": {
-    "sessionStart": [{ "type": "command", "bash": "sh .agents/hooks/session-start.sh", "timeoutSec": 20 }],
-    "preToolUse":   [{ "type": "command", "bash": "sh .agents/hooks/guard-command.sh", "timeoutSec": 10 }],
-    "postToolUse":  [{ "type": "command", "bash": "sh .agents/hooks/check-edit.sh",    "timeoutSec": 30 }]
-  }
-}
-```
-
-The cloud coding agent uses the camelCase events and `bash` key above; Copilot in VS Code reads the same folder but with PascalCase events (`SessionStart`, `PreToolUse`, `PostToolUse`) and a `command` key. Keep one file per surface if you use both.
-
-### Gemini CLI
-
-| Need | File | In repo |
-| --- | --- | --- |
-| Instructions | `GEMINI.md` by default; point it at `AGENTS.md` through `.gemini/settings.json` (below) | create |
-| Skills | `.agents/skills/` (read natively, alongside `.gemini/skills/`) | yes |
-| Hooks | `.gemini/settings.json` → `hooks` (timeouts in milliseconds, `name` required) | create |
-| Agents | `.gemini/agents/<name>.md`, same frontmatter as `.agents/agents/*.md`: copy or symlink | create |
-
-```json
-{
-  "context": { "fileName": ["AGENTS.md", "GEMINI.md"] },
-  "hooks": {
-    "SessionStart": [{ "hooks": [{ "name": "brief", "type": "command", "command": "sh $GEMINI_PROJECT_DIR/.agents/hooks/session-start.sh", "timeout": 20000 }] }],
-    "BeforeTool":   [{ "matcher": "run_shell_command", "hooks": [{ "name": "guard", "type": "command", "command": "sh $GEMINI_PROJECT_DIR/.agents/hooks/guard-command.sh", "timeout": 10000 }] }],
-    "AfterTool":    [{ "matcher": "write_file|replace", "hooks": [{ "name": "check", "type": "command", "command": "sh $GEMINI_PROJECT_DIR/.agents/hooks/check-edit.sh", "timeout": 30000 }] }]
-  }
-}
-```
-
 ### Other tools
 
-Amp, Cline, OpenCode, Warp, Zed, Antigravity and Kimi read `AGENTS.md` and `.agents/skills` natively, so they need nothing. For a tool with its own skills folder (`.windsurf/skills`, `.kiro/skills`, `.roo/skills`, …), run `npx skills add <owner/repo> -s '*' -a <tool> -y` once; the CLI links the folder for you, and `sh scripts/skills-relink.sh` makes the links committable. For hooks and agents, check the tool's docs for its equivalents of the three events and the frontmatter above.
+| Tool | Instructions | Skills | Hooks | Agents | MCP (Atlassian) | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| OpenAI Codex | `AGENTS.md`, read natively | `.agents/skills/`, read natively | create `.codex/hooks.json`, same shape as `.claude/settings.json` | create `.codex/agents/<name>.toml`, one per agent | create `.codex/config.toml` with `[mcp_servers.atlassian]`, then `codex mcp login atlassian` | Edits arrive as `apply_patch` commands with the paths inside the patch; `check-edit.sh` skips them until `payload.js` learns that shape. [Docs](https://developers.openai.com/codex/hooks) |
+| Cursor | `AGENTS.md`, read natively | `.agents/skills/`, read natively | create `.cursor/hooks.json` (`sessionStart`, `beforeShellExecution`, `afterFileEdit`) | create `.cursor/agents/<name>.md`: copy or symlink | create `.cursor/mcp.json` (`mcpServers`, no `type`) | Exit 2 blocks; `file_path` and `command` are top-level payload fields, which `payload.js` reads. [Docs](https://cursor.com/docs/agent/hooks) |
+| GitHub Copilot | `AGENTS.md`, read natively | `.agents/skills/`, read natively | create `.github/hooks/*.json` (`sessionStart`, `preToolUse`, `postToolUse`) | create `.github/agents/<name>.agent.md`: copy with the suffix | create `.vscode/mcp.json` (`servers`) | `toolArgs` is a JSON string inside the payload, which `payload.js` parses; any non-zero exit denies. [Docs](https://docs.github.com/en/copilot/reference/hooks-reference) |
+| Gemini CLI | `GEMINI.md` by default; point it at `AGENTS.md` through `.gemini/settings.json` | `.agents/skills/`, read natively | create `.gemini/settings.json` with `hooks` (`SessionStart`, `BeforeTool`, `AfterTool`) | create `.gemini/agents/<name>.md`: copy or symlink | create `.gemini/settings.json` with `mcpServers` (`httpUrl`) | Same payload shape as Claude Code; timeouts in milliseconds and a `name` per hook. [Docs](https://geminicli.com/docs/hooks/) |
+| OpenCode | `AGENTS.md`, read natively | `.agents/skills/`, read natively | a JS plugin under `.opencode/plugins/` that shells out to the three scripts; there are no command hooks | none | `opencode.json`, in repo | [Docs](https://opencode.ai/docs/plugins/) |
+| Anything else | `AGENTS.md` | read each `SKILL.md` description and load what matches, as `AGENTS.md` says | wire the three scripts to the tool's events: payload on stdin, exit 2 blocks | an agent file pasted as the system prompt | its own file | |
+
+The Atlassian server URL and the Jira conventions the skills follow are in `docs/agents/issue-tracker.md`; the question tool per harness is in `docs/agents/questions.md`.
 
 ## Documentation chain
 
@@ -250,7 +150,7 @@ The chain BRD → PRD → EARS → BDD → ADR → SPEC → TDD → IPLAN → Co
 
 ## What each skill expects from the repo
 
-Most skills need nothing beyond their own folder. The ones below read or write project files; none of those files exist in the template, and most are created lazily by the skill itself. Files under `docs/agents/` are the exception: they are configuration that must exist first.
+Most skills need nothing beyond `AGENTS.md` and their own folder. The files under `docs/agents/` are configuration the template ships; everything else in the table below is created by the skill itself when first needed.
 
 ### Shared setup: `docs/agents/`
 
@@ -264,92 +164,21 @@ Most skills need nothing beyond their own folder. The ones below read or write p
 
 To switch trackers (GitHub via `gh`, GitLab via `glab`, or local Markdown under `.scratch/`), run `/setup-matt-pocock-skills` in your agent; the skill is vendored and rewrites the three files and the `AGENTS.md` block from its templates.
 
-### `domain-modeling` (also used by `grill-with-docs`, `improve-codebase-architecture`, `triage`)
+### Per skill
 
-- `CONTEXT.md` at the root: the glossary, one opinionated definition per term with the synonyms to avoid. Created when the first term is resolved.
-- `docs/adr/NNNN-slug.md`: one short decision record each, numbered from `0001`. Created when the first decision qualifies.
-- `CONTEXT-MAP.md` at the root only for multi-context repos; it points at one `CONTEXT.md` per context, typically `src/<context>/CONTEXT.md` with `src/<context>/docs/adr/`.
+| Skill | Reads | Writes |
+| --- | --- | --- |
+| `code-review` | `docs/agents/issue-tracker.md`; `CODING_STANDARDS.md`; the spec, from an issue in the commit messages, a path you pass, or a file under `docs/`, `specs/` or `.scratch/` matching the branch | nothing |
+| `to-tickets` | `docs/agents/issue-tracker.md` | drafts under `.scratch/<feature-slug>/`, then Jira issues in dependency order |
+| `triage` | `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, `.out-of-scope/` | `.out-of-scope/<concept>.md` per rejected request; Jira labels and comments |
+| `domain-modeling`, also through `grill-with-docs`, `improve-codebase-architecture` and `triage` | `CONTEXT.md`, `docs/adr/` | `CONTEXT.md`, `docs/adr/NNNN-<slug>.md`; `CONTEXT-MAP.md` only in a multi-context repo |
+| `brd`, `prd`, `feature-forge`, `bdd-scenarios`, `design-doc`, `create-implementation-plan` | the document one stage upstream; `CONTEXT.md` when present | `docs/<stage>/NNNN-<slug>.md` per the `AGENTS.md` table (`.scratch/<feature>/` for the plan), whatever path the skill's own instructions name |
+| `docs-check` | the `AGENTS.md` table, `docs/` | repairs in place |
+| `project-init` | answers from the harness's question tool | `MEMORY.md`, the Project section of this README, the key and site in `docs/agents/issue-tracker.md` |
+| `teach` | the working directory as a workspace | `MISSION.md`, `RESOURCES.md`, `NOTES.md`, `reference/`, `lessons/`, `learning-records/`, `assets/` |
+| `loop-me` | `NOTES.md`, shared with `teach` | `workflows/<name>.md`, `NOTES.md` |
+| `implement`, `tdd`, `prototype` | a spec or tickets; the stack's test runner, type checker and task runner | code under `src/` and `tests/`; prototypes on a throwaway branch |
+| `retro` | the session logs of the agent that ran | proposed edits to `AGENTS.md`, `CODING_STANDARDS.md`, the docs and the skills |
+| `agent-browser` | the `agent-browser` CLI (`npx agent-browser` fetches it) | nothing in the repo |
 
-`tdd`, `wait-what`, `code-review` and `to-tickets` read these files when present and continue silently when not.
-
-### `code-review`
-
-- `docs/agents/issue-tracker.md` (see shared setup) to fetch the originating issue.
-- Coding standards to review against: `CODING_STANDARDS.md` at the root (a stub to fill in as code lands). Without rules there, only the built-in code-smell baseline applies.
-- The spec, found in this order: an issue referenced from the commit messages, a path you pass, or a file under `docs/`, `specs/` or `.scratch/` matching the branch.
-
-### `to-tickets`
-
-- `docs/agents/issue-tracker.md` (see shared setup).
-- Tickets are published to Jira in dependency order; drafts and the spec live under `.scratch/<feature-slug>/` (committed, see `.scratch/README.md`).
-
-### `triage`
-
-- `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` (see shared setup).
-- `.out-of-scope/<concept>.md`: one file per rejected feature request, written by the skill when an enhancement is closed as `wontfix` and read to spot repeats.
-
-### `project-init` (local skill, not vendored)
-
-Interviews the developer with the harness's question tool and writes `MEMORY.md`, the `Project` section of this README (between `project-init` markers) and the key and site in `docs/agents/issue-tracker.md` with its edit tool, so it needs no runtime and no shell. It records only: the scaffold commands it hands over for .NET, Node and Python stacks are for the developer to run. Re-running replaces the previous values.
-
-### `brd` (local skill, not vendored)
-
-Writes `docs/brd/NNNN-<slug>.md` after a `grilling` interview. Reads `CONTEXT.md` when present. Editable in place: it is not in `skills-lock.json`, so the edit hook does not protect it.
-
-### `docs-check` (local skill, not vendored)
-
-Wraps `scripts/docs-check.sh`: lists every broken ID, missing `Derived from`, unresolved or forward citation under `docs/`, then repairs them. Needs only `node`.
-
-### `feature-forge` (EARS)
-
-Runs a requirements workshop and writes a feature spec with EARS statements. Its own default path is `specs/<feature>.spec.md`; `AGENTS.md` overrides that to `docs/ears/NNNN-<slug>.md`. It reads the PRD you point it at.
-
-### `bdd-scenarios` (BDD)
-
-Reference only: how to write Given/When/Then scenarios and organise feature files. Scenarios go to `docs/bdd/NNNN-<slug>.md` per `AGENTS.md`; once a test stack exists, the same scenarios can become `.feature` files under `tests/`.
-
-### `design-doc` (SPEC)
-
-Writes a technical design document from its `references/template.md`; `AGENTS.md` puts it at `docs/spec/NNNN-<slug>.md`.
-
-### `create-implementation-plan` (IPLAN)
-
-Writes a plan file with identified, checkable tasks. Its own default path is `/plan/<purpose>-<component>-<version>.md`; `AGENTS.md` overrides that to `.scratch/<feature>/`. `to-tickets` then turns the plan into Jira tickets.
-
-### `implement`
-
-- A spec or ticket set to work from (the `to-tickets` output or an issue).
-- A test runner and type checker it can call; it runs single test files while working and the full suite at the end, then hands over to `code-review`.
-
-### `prototype`
-
-- The project's task runner, so a UI prototype starts from one command; logic prototypes are a single HTML file.
-- A throwaway branch to commit the prototype to; only the validated decision lands on the main branch.
-
-### `improve-codebase-architecture`
-
-- `CONTEXT.md` and `docs/adr/` if they exist, and a commit history to find hot spots. Its HTML report goes to the OS temp directory, not the repo.
-
-### `teach`
-
-Treats the working directory as a teaching workspace and creates, as needed: `MISSION.md`, `RESOURCES.md`, `NOTES.md`, `reference/*.html`, `lessons/NNNN-slug.html`, `learning-records/NNNN-slug.md`, and `assets/` for shared stylesheets and widgets. Run it in a dedicated folder rather than the repo root.
-
-### `loop-me`
-
-Writes `workflows/<name>.md`, one spec per recurring workflow (the folder exists, see `workflows/README.md`), and `NOTES.md` with the user's tools, channels and terminology. `teach` uses the same `NOTES.md` name, so run `teach` in its own folder.
-
-### `retro`
-
-Reads the session logs of the agent that ran, then proposes edits to `AGENTS.md`/`CLAUDE.md`, `CODING_STANDARDS.md`, the docs and the skills. It expects `writing-for-agents` to be installed (it is).
-
-### `handoff`
-
-Writes the handoff document to the OS temp directory, never into the repo. Nothing to create.
-
-### `agent-browser`
-
-Needs the `agent-browser` CLI on the machine (`npx agent-browser` fetches it). The skill is hidden from `/` completion and is reached by the agents or by the model on browser tasks.
-
-### Skills that need nothing
-
-`codebase-design`, `frontend-design`, `grilling`, `grill-with-docs`, `tailwind-design-system`, `tdd`, `vercel-react-best-practices`, `vercel-react-view-transitions`, `wait-what`, `writing-for-agents`. `setup-matt-pocock-skills` is the one that writes `docs/agents/`.
+`handoff` and `improve-codebase-architecture` write to the OS temp directory. `setup-matt-pocock-skills` rewrites `docs/agents/` and the `Agent skills` block of `AGENTS.md` when the tracker changes. Every other skill reads nothing but `AGENTS.md`.

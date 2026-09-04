@@ -70,15 +70,9 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
 6. **Remember, in your harness too.** If your harness keeps persistent memory (Claude Code auto-memory), save one `project` memory saying that the project facts live in `MEMORY.md` at the repo root and repeating the name, stack and Jira key, so they are in context before the repo is read. Skip this in a harness without memory. Done when the memory exists or the harness has none.
 
-7. **Hand over the scaffold.** Give the developer the commands for their stack from the table below as a code block, adapted to the name (PascalCase for .NET, kebab-case for Python). Do not run them: scaffolding is the developer's call and a separate step. For a stack not in the table, point at `src/README.md` and `tests/README.md`. Done when the developer has the commands.
+7. **Hand over the scaffold.** Read `scripts/stacks.tsv` and take the scaffold column of the row for the stack; replace `{Name}` with the PascalCase project name, `{name}` with the kebab-case one, and `{template}` with the unit type's template (`classlib`, `console`, `webapi` or `blazor` for .NET by library, cli, service or monolith and frontend; `--lib` for a Python library, `--app --package` otherwise). Give the developer the commands as a code block, one per line. Do not run them: scaffolding is the developer's call and a separate step. For a stack with no row, add one to `scripts/stacks.tsv` (triggers, needs, restore, scaffold) so the post-merge hook restores it too, and point at `src/README.md` and `tests/README.md`. Done when the developer has the commands and the table has a row for the stack.
 
-   | Stack | Commands |
-   | --- | --- |
-   | .NET | `dotnet new sln -n <Name>`; `dotnet new <classlib \| console \| webapi \| blazor> -o src/<Name>`; `dotnet new xunit -o tests/<Name>.Tests`; `dotnet add tests/<Name>.Tests reference src/<Name>`; `dotnet sln <Name>.sln add src/<Name> tests/<Name>.Tests`; then `dotnet test` |
-   | Node | `npm init -y` (`pnpm init`, `yarn init -y`, `bun init -y`); `npm install --save-dev typescript vitest @types/node` (`pnpm add -D …`); `npx tsc --init --rootDir src --outDir dist`; entry point in `src/`, tests in `tests/`, `"test": "vitest run"` in `package.json` |
-   | Python | `uv init --lib --name <name> .` for a library, `uv init --app --package --name <name> .` otherwise; `uv add --dev pytest`; then `uv run pytest` |
-
-8. **Close the loop.** Ask the developer to commit (`git add -A`, then a commit such as `initialise <name>`). If Requirements was `none yet`, hand off to the `brd` skill; otherwise point out that the `business-analyst` agent can start the documentation chain from the requirements location now on record. The post-merge Git hook already restores npm, pnpm, yarn and NuGet dependencies; for another stack, add its restore command to `.githooks/post-merge.sh`.
+8. **Close the loop.** Ask the developer to commit (`git add -A`, then a commit such as `initialise <name>`). If Requirements was `none yet`, hand off to the `brd` skill; otherwise point out that the `business-analyst` agent can start the documentation chain from the requirements location now on record. The post-merge Git hook restores whatever `scripts/stacks.tsv` says for the changed manifests, so the row added in step 7 is all it needs.
 
 ## Report
 

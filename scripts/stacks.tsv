@@ -1,0 +1,8 @@
+# scripts/stacks.tsv: one row per stack. Read by scripts/on-manifest-change.sh (restore after a merge) and by the project-init skill (scaffold).
+# Columns, tab-separated: stack | triggers: file patterns, space-separated, matched by path or basename | needs: a file that must exist at the root for the row to fire, or - | restore: command run from the repo root, or - | scaffold: commands joined by " && " with {Name} PascalCase, {name} kebab-case, {template} chosen by project-init, or -
+skills	skills-lock.json	-	sh scripts/skills-install.sh	-
+npm	package-lock.json package.json	package-lock.json	npm install	npm init -y && npm install --save-dev typescript vitest @types/node && npx tsc --init --rootDir src --outDir dist
+pnpm	pnpm-lock.yaml package.json	pnpm-lock.yaml	pnpm install	pnpm init && pnpm add -D typescript vitest @types/node && npx tsc --init --rootDir src --outDir dist
+yarn	yarn.lock package.json	yarn.lock	yarn install	yarn init -y && yarn add -D typescript vitest @types/node && npx tsc --init --rootDir src --outDir dist
+dotnet	*.csproj *.fsproj *.vbproj *.props *.targets packages.lock.json nuget.config global.json	-	dotnet restore	dotnet new sln -n {Name} && dotnet new {template} -o src/{Name} && dotnet new xunit -o tests/{Name}.Tests && dotnet add tests/{Name}.Tests reference src/{Name} && dotnet sln {Name}.sln add src/{Name} tests/{Name}.Tests
+python	uv.lock pyproject.toml	uv.lock	uv sync	uv init {template} --name {name} . && uv add --dev pytest

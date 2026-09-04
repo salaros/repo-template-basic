@@ -8,7 +8,7 @@ cd "$(dirname -- "$0")/../.." || exit 0
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "not a git checkout")
 echo "branch: $branch"
 
-[ -f .git/hooks/post-merge ] || echo "git hooks: not installed. Run: sh scripts/githooks-init.sh"
+[ "$(git config --get core.hooksPath 2>/dev/null)" = ".githooks" ] || echo "git hooks: not installed. Run: sh scripts/githooks-init.sh"
 
 if command -v node >/dev/null 2>&1 && [ -f scripts/skills.js ]; then
     missing=$(node scripts/skills.js missing 2>/dev/null | tr '

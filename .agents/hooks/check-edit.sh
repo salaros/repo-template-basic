@@ -29,7 +29,7 @@ check_one() {
     esac
 
     case "$file" in
-        *.sh)
+        *.sh|.githooks/*)
             msg=$(sh -n "$file" 2>&1) || { echo "shell syntax error in $file: $msg" >&2; return 2; } ;;
         *.js|*.mjs|*.cjs)
             msg=$(node --check "$file" 2>&1) || { echo "JavaScript syntax error in $file: $msg" >&2; return 2; } ;;
@@ -50,9 +50,9 @@ check_one() {
             msg=$(node scripts/skills.js check 2>&1) || { echo "skills check failed (fix the cause, or run: node scripts/skills.js write):" >&2; echo "$msg" >&2; return 2; } ;;
     esac
 
-    # A hook, the lib or a fixture changed: the suite must still pass (HOOK_TEST stops recursion).
+    # A hook, the lib, a fixture, the Git hook or the stack table changed: the suite must still pass (HOOK_TEST stops recursion).
     case "$file" in
-        .agents/hooks/*)
+        .agents/hooks/*|scripts/on-manifest-change.sh|scripts/stacks.tsv|.githooks/*)
             [ -n "${HOOK_TEST:-}" ] && return 0
             msg=$(sh .agents/hooks/test.sh 2>&1) || { echo "hook tests failed after editing $file:" >&2; echo "$msg" >&2; return 2; } ;;
     esac
