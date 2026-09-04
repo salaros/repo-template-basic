@@ -23,7 +23,8 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 | `.claude/` | Claude Code wiring: `skills/*` and `agents` are symlinks into `.agents/`, `settings.json` wires the hooks. |
 | `.githooks/`, `scripts/githooks-init.sh` | Git hooks (post-merge reinstalls dependencies and skills when their manifests change). |
 | `docs/agents/` | Per-repo configuration the skills read: issue tracker, triage labels, domain-doc rules. |
-| `CODING_STANDARDS.md` | Rules the `code-review` skill applies to a diff. A stub until the stack lands. |
+| `CODING_STANDARDS.md` | Rules the `code-review` skill applies to a diff. A stub until the stack lands; anything a tool enforces stays out of it. |
+| `.editorconfig`, `.gitattributes`, `.gitignore`, `stylecop.json` | Encoding, indentation, line endings, ignored output and analyzer settings. Stack-specific entries are kept when they are inert on other stacks, so no stack is forced. |
 | `workflows/` | Workflow specs written by `loop-me`. |
 | `.scratch/` | Committed working files: feature specs, ticket drafts, prototypes not yet on a branch. |
 | `.mcp.json`, `opencode.json` | MCP server registrations (Atlassian, for Jira) for Claude Code and OpenCode. |

@@ -401,7 +401,7 @@ dotnet_analyzer_diagnostic.severity = none
 ###############################
 # Tests                       #
 ###############################
-[src/Tests/**/*.cs]
+[tests/**/*.cs]
 # Test names use Method_Scenario_Expectation underscores by design.
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.SA1600.severity = none

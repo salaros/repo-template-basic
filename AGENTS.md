@@ -36,7 +36,7 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domai
 
 ### Coding standards
 
-`CODING_STANDARDS.md`, read by `code-review` only.
+`CODING_STANDARDS.md`, read by `code-review` only. Whitespace, encoding, line endings and analyzer severities are enforced by `.editorconfig`, `.gitattributes` and the stack's own tool configs at the root, not restated there.
 
 ## Domain language
 

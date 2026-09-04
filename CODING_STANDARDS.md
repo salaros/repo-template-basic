@@ -4,6 +4,8 @@ Read during review (`code-review`), not during implementation. Every rule here i
 
 The template has no stack yet. Add rules under the headings below as the first code lands, one line each, phrased as what to do. If a rule needs more than a line, put the detail in `docs/` and link it.
 
+Mechanical rules live elsewhere: encoding, indentation and line endings in `.editorconfig` and `.gitattributes`, ignored output in `.gitignore`, and analyzer or formatter settings in each tool's own config at the root (for example `stylecop.json`). Whatever those enforce stays out of this file.
+
 ## Structure
 
 - Organise `src/` by feature or domain, not by file type (see `src/README.md`).

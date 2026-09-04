@@ -1,1 +1,25 @@
+# Line endings: LF in the repository and on checkout on every OS, so diffs never show
+# ending-only changes. Editors get the same rule from .editorconfig.
 * text=auto eol=lf
+
+# Windows batch files need CRLF to run reliably.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: never normalised or textually diffed.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.7z binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
