@@ -70,9 +70,29 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
 6. **Remember, in your harness too.** If your harness keeps persistent memory (Claude Code auto-memory), save one `project` memory saying that the project facts live in `MEMORY.md` at the repo root and repeating the name, stack and Jira key, so they are in context before the repo is read. Skip this in a harness without memory. Done when the memory exists or the harness has none.
 
-7. **Hand over the scaffold.** Read `scripts/stacks.tsv` and take the scaffold column of the row for the stack; replace `{Name}` with the PascalCase project name, `{name}` with the kebab-case one, and `{template}` with the unit type's template (`classlib`, `console`, `webapi` or `blazor` for .NET by library, cli, service or monolith and frontend; `--lib` for a Python library, `--app --package` otherwise). Give the developer the commands as a code block, one per line. Do not run them: scaffolding is the developer's call and a separate step. For a stack with no row, add one to `scripts/stacks.tsv` (triggers, needs, restore, scaffold) so the post-merge hook restores it too, and point at `src/README.md` and `tests/README.md`. Done when the developer has the commands and the table has a row for the stack.
+7. **Hand over the scaffold.** Read `scripts/stacks.tsv` and take the scaffold column of the row for the stack; replace `{Name}` with the PascalCase project name, `{name}` with the kebab-case one, and `{template}` with the unit type's template (`classlib`, `console`, `webapi` or `blazor` for .NET by library, cli, service or monolith and frontend; `--lib` for a Python library, `--app --package` otherwise). Give the developer the commands as a code block, one per line. Do not run them: scaffolding is the developer's call and a separate step. For a stack with no row, add one to `scripts/stacks.tsv` (triggers, needs, restore, scaffold, formats, format) so the post-merge hook restores it and the pre-push hook format-checks it too, and point at `src/README.md` and `tests/README.md`. Done when the developer has the commands and the table has a row for the stack.
 
-8. **Close the loop.** Ask the developer to commit (`git add -A`, then a commit such as `initialise <name>`). If Requirements was `none yet`, hand off to the `brd` skill; otherwise point out that the `business-analyst` agent can start the documentation chain from the requirements location now on record. The post-merge Git hook restores whatever `scripts/stacks.tsv` says for the changed manifests, so the row added in step 7 is all it needs.
+   For .NET, the scaffold ends by installing Husky.NET as a local tool and then running `git config core.hooksPath .githooks`. That last command is not redundant: `dotnet husky install` repoints `core.hooksPath` at `.husky`, which would disable this repo's own hooks. Tell the developer to keep it, and that `dotnet tool restore` is what a teammate runs after cloning.
+
+8. **Seed the pre-push task, for .NET only.** After the developer says the scaffold has run, replace the example task in `.husky/task-runner.json` with the one below. Husky.NET's default task carries no group, so `dotnet husky run --group pre-push` would match nothing and exit 0, and the pre-push formatting gate would pass without checking anything.
+
+   ```json
+   {
+      "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+      "tasks": [
+         {
+            "name": "format-check",
+            "group": "pre-push",
+            "command": "dotnet",
+            "args": [ "format", "--no-restore", "--verify-no-changes" ]
+         }
+      ]
+   }
+   ```
+
+   Done when `dotnet husky run --group pre-push` reports the task, not an empty run. Skip this step entirely for any other stack.
+
+9. **Close the loop.** Ask the developer to commit (`git add -A`, then a commit such as `initialise <name>`). If Requirements was `none yet`, hand off to the `brd` skill; otherwise point out that the `business-analyst` agent can start the documentation chain from the requirements location now on record. The post-merge Git hook restores whatever `scripts/stacks.tsv` says for the changed manifests, so the row added in step 7 is all it needs.
 
 ## Report
 
