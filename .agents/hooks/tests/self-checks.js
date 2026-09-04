@@ -146,14 +146,32 @@ function sessionStartFollowsProjectDir(t, env) {
         "session-start.js follows CLAUDE_PROJECT_DIR", r.output);
 }
 
-// tools/docs-site reads the stage table through docs-check's readChain(), so a change to that
-// parser can break the portal without any docs-check test noticing. Running its chain module end to
-// end catches it, and needs no Astro install: chain.mjs prints one line per stage, in order.
-function docsSiteReadsTheChainInOrder(t) {
-    const r = lib.node(["tools/docs-site/chain.mjs"]);
+// The stage table in AGENTS.md has one parser, readChain(), and anything that needs the pipeline
+// builds on it rather than reading the table again. Pin what it promises those callers: every row
+// in table order, document stages carrying the folder their name implies.
+const PIPELINE = ["BRD", "PRD", "EARS", "BDD", "ADR", "SPEC"];
+function chainIsParsedInPipelineOrder(t) {
+    const { stages, problems } = docsCheck.readChain();
+    const named = stages.map(s => s.stage);
+    const detail = named.join(",");
+    t.ok(problems.length === 0, "readChain finds no problem in this repo's table", problems.join("\n"));
+    const order = PIPELINE.map(s => named.indexOf(s));
+    t.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), "readChain returns the stages in pipeline order", detail);
+    t.ok(stages.some(s => !s.folder), "readChain returns the stages that are not documents too", detail);
+    const wrong = stages.filter(s => s.folder && s.folder !== s.stage.toLowerCase());
+    t.ok(!wrong.length, "every document stage's folder matches its name", wrong.map(s => `${s.stage} -> ${s.lives}`).join(","));
+}
+
+// tools/docs-site is optional: a repo that publishes straight to Jira can delete the folder and owes
+// this suite nothing, so the portal's end-to-end smoke runs only when it is installed. It needs no
+// Astro install of its own, since chain.mjs only reads.
+function docsSiteRendersTheChain(t) {
+    const entry = path.join("tools", "docs-site", "chain.mjs");
+    if (!fs.existsSync(entry)) { console.log("skip tools/docs-site smoke: the optional portal is not installed"); return; }
+    const r = lib.node([entry]);
     t.ok(r.status === 0, "tools/docs-site/chain.mjs runs", r.output);
     if (r.status !== 0) return;
-    const order = ["BRD", "PRD", "EARS", "BDD", "ADR", "SPEC"].map(s => r.output.indexOf(`${s}\t`));
+    const order = PIPELINE.map(s => r.output.indexOf(`${s}\t`));
     t.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])),
         "docs-site reads the stages in pipeline order", r.output);
 }
@@ -164,6 +182,7 @@ module.exports = [
     docsCheckDerivedFromShapes,
     docsCheckSourceAndAdrExemption,
     docsCheckMemoryRequirements,
-    docsSiteReadsTheChainInOrder,
+    chainIsParsedInPipelineOrder,
+    docsSiteRendersTheChain,
     sessionStartFollowsProjectDir,
 ];

@@ -2,6 +2,8 @@
 
 A browsable portal over the documentation chain, built with [Astro Starlight](https://starlight.astro.build/). It reads `docs/` at the repo root **live**: nothing is copied, synced or generated into this folder, and the documents stay the single source of truth.
 
+**This tool is optional.** The chain works without it: the documents are Markdown, `node scripts/docs-check.js` validates them, and `to-tickets` publishes the plan to Jira. Nothing outside this folder depends on it, so a project that does not want a local site can delete `tools/docs-site/` and lose nothing else. The harness suite notices and skips its check; `readChain()` in `scripts/docs-check.js`, which this tool builds on, belongs to the validator and stays.
+
 ## Running it
 
 From this folder:

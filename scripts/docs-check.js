@@ -13,7 +13,8 @@
 // always cite one, and is exempt from the backwards-only rule in both directions. MEMORY.md's
 // Requirements line follows the same reference rule, or says "none yet".
 // Prints one line per problem and exits 1 when there are any. The edit hook requires check();
-// tools/docs-site requires readChain(), so the stage table is parsed in one place, not two.
+// readChain() is exported for anything else that needs the pipeline (the optional tools/docs-site
+// does), so the stage table is parsed in one place, not two.
 // Usage: node scripts/docs-check.js [docs-dir] [agents-file] [memory-file]
 //        (defaults: docs, AGENTS.md, MEMORY.md)
 const fs = require("fs");
@@ -37,7 +38,8 @@ const referenceTokens = line => line.replace(/^\**Derived from:?\**:?/i, "")
 // The chain itself, read from the AGENTS.md table: | Stage | Answers | Lives in | Skill |. Every
 // row in table order, so the caller sees the pipeline the way a reader of AGENTS.md does; `folder`
 // is set only on the rows that are document stages (tests/, .scratch/ and src/ have none). This is
-// the only parser of that table: check() below and tools/docs-site both go through it.
+// the only parser of that table: check() below goes through it, as does the optional
+// tools/docs-site portal.
 function readChain(agentsFile = "AGENTS.md") {
     lib.chdirRoot();
     const problems = [];

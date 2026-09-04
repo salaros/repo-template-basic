@@ -50,4 +50,10 @@ Tests (`tests/`), the implementation plan (`.scratch/`, published to Jira by `to
 
 ## Browsing them
 
-These files are readable as they are, but `tools/docs-site` renders them as a portal: the stages in pipeline order, and every citation a link that opens the document it names at the item it names. Run `npm --prefix tools/docs-site run dev` after `npm --prefix tools/docs-site install`. It reads these files live, copying nothing and writing nothing back; `tools/docs-site/README.md` has the details.
+These files are readable as they are, and for many projects that plus `to-tickets` into Jira is the whole story. When a rendered site helps, `tools/docs-site` is an optional portal over the same files: the stages in pipeline order, and every citation a link that opens the document it names at the item it names.
+
+```bash
+npm --prefix tools/docs-site install && npm --prefix tools/docs-site run dev
+```
+
+It reads these files live, copying nothing and writing nothing back. It is also entirely removable: delete `tools/docs-site/` and nothing else in the repo changes behaviour. `tools/docs-site/README.md` has the details.
