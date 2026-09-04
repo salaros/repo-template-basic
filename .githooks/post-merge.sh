@@ -44,10 +44,11 @@ needs_install() {
 
 # Check for changes in specific files and run corresponding commands
 
-# Check if skills.json has changed and run the skills update command
+# Check if the skill manifest has changed and re-run the installer
+# (skills.json is the intent; skills-lock.json is what npx skills resolved)
 if file_changed 'skills\.json'; then
-    echo "skills.json changed. Running npx skills update..."
-    npx skills update
+    echo "skills.json changed. Running scripts/skills-install.sh..."
+    sh scripts/skills-install.sh
 fi
 
 # Check if package-lock.json has changed or if package.json has changed

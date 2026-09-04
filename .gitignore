@@ -598,3 +598,5 @@ bundles/
 vendor/pkg/
 pyenv
 Vagrantfile
+## Agent harness: per-developer overrides
+.claude/settings.local.json

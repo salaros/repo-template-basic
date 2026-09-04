@@ -1,0 +1,29 @@
+{
+  "agents": ["claude-code", "codex"],
+  "sources": {
+    "mattpocock/skills": [
+      "code-review",
+      "codebase-design",
+      "domain-modeling",
+      "grill-me",
+      "grill-with-docs",
+      "grilling",
+      "handoff",
+      "implement",
+      "improve-codebase-architecture",
+      "loop-me",
+      "prototype",
+      "retro",
+      "tdd",
+      "teach",
+      "to-tickets",
+      "triage",
+      "wait-what",
+      "writing-for-agents"
+    ],
+    "anthropics/skills": ["frontend-design"],
+    "vercel-labs/agent-browser": ["agent-browser"],
+    "vercel-labs/agent-skills": ["vercel-react-best-practices", "vercel-react-view-transitions"],
+    "wshobson/agents": ["tailwind-design-system"]
+  }
+}
