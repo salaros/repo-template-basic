@@ -54,16 +54,24 @@ function payload() {
     return j;
 }
 
-function filePaths(j, rootDir) {
-    if (!j) return [];
+// The one place that knows the three shapes a harness nests a field in: tool_input (Claude Code,
+// Gemini CLI; tiKeys lists which keys under it count), the top level (Cursor) or toolArgs, a JSON
+// string, under taKey (Copilot). Returns the values found, in that priority order; a caller with
+// nothing decides for itself what "nothing" means and how to say so.
+function payloadField(j, { tiKeys, topKey, taKey }) {
     const found = [];
     const ti = j.tool_input;
-    if (ti && typeof ti === "object")
-        for (const k of ["file_path", "notebook_path", "path", "filePath"]) if (typeof ti[k] === "string") found.push(ti[k]);
-    if (typeof j.file_path === "string") found.push(j.file_path);
+    if (ti && typeof ti === "object") for (const k of tiKeys) if (typeof ti[k] === "string") found.push(ti[k]);
+    if (typeof j[topKey] === "string") found.push(j[topKey]);
     let ta = j.toolArgs;
     if (typeof ta === "string") { try { ta = JSON.parse(ta); } catch { ta = null; } }
-    if (ta && typeof ta === "object" && typeof ta.path === "string") found.push(ta.path);
+    if (ta && typeof ta === "object" && typeof ta[taKey] === "string") found.push(ta[taKey]);
+    return found;
+}
+
+function filePaths(j, rootDir) {
+    if (!j) return [];
+    const found = payloadField(j, { tiKeys: ["file_path", "notebook_path", "path", "filePath"], topKey: "file_path", taKey: "path" });
     if (!found.length) { warn(`no file path in payload (keys: ${Object.keys(j).join(", ") || "none"})`); return []; }
     const out = new Set();
     for (const p of found) {
@@ -80,13 +88,7 @@ function filePaths(j, rootDir) {
 // that only wants to inspect the real command text can fall back to the raw payload for safety.
 function commandText(j) {
     if (!j) return "";
-    const found = [];
-    const ti = j.tool_input;
-    if (ti && typeof ti === "object" && typeof ti.command === "string") found.push(ti.command);
-    if (typeof j.command === "string") found.push(j.command);
-    let ta = j.toolArgs;
-    if (typeof ta === "string") { try { ta = JSON.parse(ta); } catch { ta = null; } }
-    if (ta && typeof ta === "object" && typeof ta.command === "string") found.push(ta.command);
+    const found = payloadField(j, { tiKeys: ["command"], topKey: "command", taKey: "command" });
     if (!found.length) { warn(`no command text in payload (keys: ${Object.keys(j).join(", ") || "none"})`); return ""; }
     return found.join("\n");
 }
