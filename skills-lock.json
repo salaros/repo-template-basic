@@ -7,6 +7,12 @@
       "skillPath": "skills/agent-browser/SKILL.md",
       "computedHash": "a674b7d81066e3cc471a7512ddb4ae724418cbfefa75cbb050b0dc430e4d57a0"
     },
+    "bdd-scenarios": {
+      "source": "thebushidocollective/han",
+      "sourceType": "github",
+      "skillPath": "plugins/patterns/bdd/skills/bdd-scenarios/SKILL.md",
+      "computedHash": "f16b0e8e672a23c96d79c5e44e84ceab5db41475dbfdceb2be34ed59f51ed7ee"
+    },
     "code-review": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -19,17 +25,29 @@
       "skillPath": "skills/engineering/codebase-design/SKILL.md",
       "computedHash": "5a17552cc1482f1a40124bf4e6c9dbd90ac0dbb47e71c07d47369f9e5f2ae3b5"
     },
-    "documentation-and-adrs": {
-      "source": "addyosmani/agent-skills",
+    "create-implementation-plan": {
+      "source": "github/awesome-copilot",
       "sourceType": "github",
-      "skillPath": "skills/documentation-and-adrs/SKILL.md",
-      "computedHash": "7464fd2950b99fb00bbf65cab27653e0a049eef00c98927713ffdfe232a9daa9"
+      "skillPath": "skills/create-implementation-plan/SKILL.md",
+      "computedHash": "5c282fded01e40a7db621b0690513f62d179b600e0a271751e82cb0c9e1bcafc"
+    },
+    "design-doc": {
+      "source": "diskd-ai/design-doc",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "ffea63d6c3a547b63f5f824345b32f6c141de7c392bf27fc00eae3d86f552d01"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
       "computedHash": "a11713c0ff7870efa3c331b2e273f09116158485246edc89ae5088eefd1b0b48"
+    },
+    "feature-forge": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/feature-forge/SKILL.md",
+      "computedHash": "c3ac2995e2ec8397457feeea97df88c2a89203083a574ff3799774c43e997c19"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
@@ -42,12 +60,6 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
-    },
-    "grill-me": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "9cdbb4b8f7a3aeaef82e6230c9e823500d4a8a1214c726cf342cf9829d34fc7d"
     },
     "grill-with-docs": {
       "source": "mattpocock/skills",
@@ -138,12 +150,6 @@
       "sourceType": "github",
       "skillPath": "skills/productivity/to-questionnaire/SKILL.md",
       "computedHash": "e2cb00bfeb4243f1384bf7e106185ccb69fd7d45ff6a3b04bec4102f505aba31"
-    },
-    "to-spec": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/engineering/to-spec/SKILL.md",
-      "computedHash": "0ee8caf20fc7df94db53e76f42588fb01eee88c6f8dc97e7a3a0565be8978e74"
     },
     "to-tickets": {
       "source": "mattpocock/skills",

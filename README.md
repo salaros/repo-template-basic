@@ -6,7 +6,7 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 
 1. **Windows only, before cloning:** enable Developer Mode (Settings → System → For developers) and run `git config --global core.symlinks true`. The `.claude/` folder is tracked as symlinks; without this, Git checks them out as text files and Claude Code sees no skills.
 2. Clone, then install the Git hooks once: `sh scripts/githooks-init.sh`
-3. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code -y`, then `sh scripts/skills-relink.sh`, then commit.
+3. Skills are vendored in `.agents/skills`, so there is nothing to install. To add one: `npx skills add <owner/repo> -s <skill> -a claude-code codex -y`, then `sh scripts/skills-relink.sh`, then commit.
 4. Open the repo in your AI tool, authorise the Atlassian MCP server when the tool asks (Jira is the issue tracker, see [MCP servers](#mcp-servers)), and check the section for your tool under [Files per AI tool](#files-per-ai-tool).
 
 ## Layout
@@ -34,8 +34,8 @@ A starting point that does not assume a language or framework: `.gitignore`, `.g
 Skills follow the Agent Skills format: a folder with a `SKILL.md` whose frontmatter carries a `name` and a `description`, plus optional reference files. They are managed with the [`skills` CLI](https://skills.sh); `skills-lock.json` records what is installed and `.agents/skills` holds the files. Commit both, plus the `.claude/skills` links.
 
 ```bash
-npx skills add mattpocock/skills -s to-spec -a claude-code -y   # add a skill
-npx skills remove to-spec -y                                       # remove one
+npx skills add mattpocock/skills -s wait-what -a claude-code codex -y   # add a skill
+npx skills remove wait-what -y                                       # remove one
 npx skills update                                                  # newer versions of everything
 sh scripts/skills-relink.sh                                        # after any of the above, on Windows
 ```
@@ -43,7 +43,7 @@ sh scripts/skills-relink.sh                                        # after any o
 - The relink step matters on Windows because the CLI recreates the Claude Code links as absolute junctions, which Git cannot store; on Linux and macOS it is a no-op.
 - `sh scripts/skills-install.sh` restores `.agents/skills` from the lock file. A normal clone never needs it; the post-merge Git hook runs it when the lock changes.
 - Do not edit a vendored skill in place; the next update overwrites it. Fork it under another name outside `.agents/skills`, or change it upstream.
-- Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own (`tdd`, `grilling`, `code-review`); **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name` (`grill-me`, `implement`, `teach`, `to-tickets`, `triage`, `handoff`, `retro`). `npx skills list` shows what is installed.
+- Two kinds of skill: **model-invoked** ones carry a description the agent matches on its own (`tdd`, `grilling`, `code-review`); **user-invoked** ones (`disable-model-invocation: true`) only fire when you type `/name` (`implement`, `teach`, `to-tickets`, `triage`, `handoff`, `retro`). `npx skills list` shows what is installed.
 
 ## Hooks
 
@@ -53,7 +53,7 @@ Three POSIX `sh` scripts in `.agents/hooks/`. Each reads the harness's JSON payl
 | --- | --- | --- |
 | `session-start.sh` | session start | Prints a brief into the agent's context: branch, whether Git hooks are installed, skills recorded in `skills-lock.json` but missing from disk, whether `CONTEXT.md`, `docs/adr/` and the issue-tracker config exist. |
 | `guard-command.sh` | before a shell command | Blocks force pushes, `git reset --hard`, `git clean -f`, `git branch -D`, and recursive deletes of `/`, `~`, `.git` or `*`. The agent is told to ask you instead. |
-| `check-edit.sh` | after a file write/edit | Syntax-checks `*.sh`, validates `*.json`, and refuses in-place edits of vendored skills. |
+| `check-edit.sh` | after a file write/edit | Syntax-checks `*.sh`, validates `*.json`, runs `scripts/docs-check.sh` for files under `docs/<stage>/`, and refuses in-place edits of vendored skills. |
 
 The scripts are harness-neutral; the wiring is one small config file per tool, listed under [Files per AI tool](#files-per-ai-tool). Only the Claude Code wiring ships in the repo, because it is the one that has been run.
 
@@ -63,8 +63,8 @@ Agent definitions live in `.agents/agents/*.md`: YAML frontmatter with `name` an
 
 | Agent | For | Skills it routes to |
 | --- | --- | --- |
-| `engineer` | Engineering tasks bigger than a one-line edit | all of them: `grilling`, `domain-modeling`, `prototype`, `to-tickets`, `triage`, `codebase-design`, `improve-codebase-architecture`, `tdd`, `implement`, `frontend-design`, `tailwind-design-system`, `vercel-react-*`, `agent-browser`, `code-review`, `writing-for-agents`, `teach`, `loop-me`, `wait-what`, `handoff`, `retro` |
-| `business-analyst` | Requirements, process design, interface contracts, agent-ready briefs | `grilling`, `grill-with-docs` (grilling + `domain-modeling`), `codebase-design`, `to-tickets`, `loop-me`, `teach`, `writing-for-agents`, `agent-browser` |
+| `engineer` | Engineering tasks bigger than a one-line edit, and the ADR → SPEC → TDD → IPLAN → Code half of the documentation chain | all of them: `design-doc`, `create-implementation-plan`, `docs-check`, `grilling`, `domain-modeling`, `prototype`, `to-tickets`, `triage`, `codebase-design`, `improve-codebase-architecture`, `tdd`, `implement`, `frontend-design`, `tailwind-design-system`, `vercel-react-*`, `agent-browser`, `code-review`, `writing-for-agents`, `teach`, `loop-me`, `wait-what`, `handoff`, `retro` |
+| `business-analyst` | Requirements, process design, interface contracts, agent-ready briefs, the BRD → PRD → EARS → BDD half of the documentation chain | `grilling`, `grill-with-docs` (grilling + `domain-modeling`), `brd`, `prd`, `feature-forge`, `bdd-scenarios`, `codebase-design`, `to-tickets`, `loop-me`, `teach`, `writing-for-agents`, `agent-browser` |
 | `assistant` | Non-technical colleagues | `teach`, `loop-me`, `writing-for-agents`, `agent-browser` |
 
 Three skill names have been renamed upstream since they were first published: `to-issues` is now `to-tickets`, `design-an-interface` is now `codebase-design`, and `write-a-skill` is now `writing-for-agents`. The agents use the current names.
@@ -96,7 +96,7 @@ What each tool reads, what is already in the repo, and what you must create for 
 | Agents | `.claude/agents` → symlink to `../.agents/agents`; frontmatter `name`, `description` (+ optional `tools`, `model`, `skills`) | yes |
 | Per-developer overrides | `.claude/settings.local.json` (git-ignored) | no |
 
-Invoke an agent with "use the engineer agent to …", or a skill with `/tdd`, `/grill-me`, and so on. On Windows the symlinks need Developer Mode and `core.symlinks=true` (see Getting started); if you cannot use symlinks, run `npx skills add … --copy` and copy `.agents/agents/*.md` into `.claude/agents/`.
+Invoke an agent with "use the engineer agent to …", or a skill with `/tdd`, `/grilling`, and so on. On Windows the symlinks need Developer Mode and `core.symlinks=true` (see Getting started); if you cannot use symlinks, run `npx skills add … --copy` and copy `.agents/agents/*.md` into `.claude/agents/`.
 
 ### OpenAI Codex
 
@@ -196,6 +196,12 @@ The cloud coding agent uses the camelCase events and `bash` key above; Copilot i
 
 Amp, Cline, OpenCode, Warp, Zed, Antigravity and Kimi read `AGENTS.md` and `.agents/skills` natively, so they need nothing. For a tool with its own skills folder (`.windsurf/skills`, `.kiro/skills`, `.roo/skills`, …), run `npx skills add <owner/repo> -s '*' -a <tool> -y` once; the CLI links the folder for you, and `sh scripts/skills-relink.sh` makes the links committable. For hooks and agents, check the tool's docs for its equivalents of the three events and the frontmatter above.
 
+## Documentation chain
+
+`AGENTS.md` (section "Documentation") defines the chain BRD → PRD → EARS → BDD → ADR → SPEC → TDD → IPLAN → Code, the folder each artifact lives in (`docs/<stage>/`, see `docs/README.md`) and the skill that writes it. The `business-analyst` agent owns the first four stages, the `engineer` agent the rest. The `brd` and `docs-check` skills are local to this repo; the others are vendored.
+
+Every document gets its ID from its file name (`docs/ears/0003-x.md` is `EARS-0003`), carries it in the first heading, and cites what it was derived from (`**Derived from:** PRD-0002`, and `PRD-0002/FR-3` for individual items). `scripts/docs-check.sh` verifies that every citation resolves and points backwards along the chain; the edit hook runs it after each change under `docs/`, and the `docs-check` skill repairs the findings.
+
 ## What each skill expects from the repo
 
 Most skills need nothing beyond their own folder. The ones below read or write project files; none of those files exist in the template, and most are created lazily by the skill itself. Files under `docs/agents/` are the exception: they are configuration that must exist first.
@@ -235,6 +241,30 @@ To switch trackers (GitHub via `gh`, GitLab via `glab`, or local Markdown under 
 - `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` (see shared setup).
 - `.out-of-scope/<concept>.md`: one file per rejected feature request, written by the skill when an enhancement is closed as `wontfix` and read to spot repeats.
 
+### `brd` (local skill, not vendored)
+
+Writes `docs/brd/NNNN-<slug>.md` after a `grilling` interview. Reads `CONTEXT.md` when present. Editable in place: it is not in `skills-lock.json`, so the edit hook does not protect it.
+
+### `docs-check` (local skill, not vendored)
+
+Wraps `scripts/docs-check.sh`: lists every broken ID, missing `Derived from`, unresolved or forward citation under `docs/`, then repairs them. Needs only `node`.
+
+### `feature-forge` (EARS)
+
+Runs a requirements workshop and writes a feature spec with EARS statements. Its own default path is `specs/<feature>.spec.md`; `AGENTS.md` overrides that to `docs/ears/NNNN-<slug>.md`. It reads the PRD you point it at.
+
+### `bdd-scenarios` (BDD)
+
+Reference only: how to write Given/When/Then scenarios and organise feature files. Scenarios go to `docs/bdd/NNNN-<slug>.md` per `AGENTS.md`; once a test stack exists, the same scenarios can become `.feature` files under `tests/`.
+
+### `design-doc` (SPEC)
+
+Writes a technical design document from its `references/template.md`; `AGENTS.md` puts it at `docs/spec/NNNN-<slug>.md`.
+
+### `create-implementation-plan` (IPLAN)
+
+Writes a plan file with identified, checkable tasks. Its own default path is `/plan/<purpose>-<component>-<version>.md`; `AGENTS.md` overrides that to `.scratch/<feature>/`. `to-tickets` then turns the plan into Jira tickets.
+
 ### `implement`
 
 - A spec or ticket set to work from (the `to-tickets` output or an issue).
@@ -271,4 +301,4 @@ Needs the `agent-browser` CLI on the machine (`npx agent-browser` fetches it). T
 
 ### Skills that need nothing
 
-`codebase-design`, `frontend-design`, `grilling`, `grill-me`, `grill-with-docs`, `tailwind-design-system`, `tdd`, `vercel-react-best-practices`, `vercel-react-view-transitions`, `wait-what`, `writing-for-agents`. `setup-matt-pocock-skills` is the one that writes `docs/agents/`.
+`codebase-design`, `frontend-design`, `grilling`, `grill-with-docs`, `tailwind-design-system`, `tdd`, `vercel-react-best-practices`, `vercel-react-view-transitions`, `wait-what`, `writing-for-agents`. `setup-matt-pocock-skills` is the one that writes `docs/agents/`.

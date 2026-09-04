@@ -5,7 +5,7 @@
 # Skills are committed, so a normal clone never needs this; run it when .agents/skills is
 # missing or damaged, or after a merge that changed the lock file.
 # To add a skill, use the CLI directly and commit the result:
-#   npx skills add <owner/repo> -s <skill> -a claude-code -y && sh scripts/skills-relink.sh
+#   npx skills add <owner/repo> -s <skill> -a claude-code codex -y && sh scripts/skills-relink.sh
 # Usage: sh scripts/skills-install.sh
 set -e
 

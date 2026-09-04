@@ -14,6 +14,29 @@ This repo and its skills can be used to crack down business requirements in orde
 The following documentation pipeline should be followed:
 BRD → PRD → EARS → BDD → ADR → SPEC → TDD → IPLAN → Code
 
+Each stage answers one question, refines the stage before it, and is written with one skill:
+
+| Stage | Answers | Lives in | Skill |
+| --- | --- | --- | --- |
+| BRD | why the business wants it, and how it will know it worked | `docs/brd/` | `brd` |
+| PRD | what the product does for whom | `docs/prd/` | `prd` |
+| EARS | each requirement as one testable "shall" statement | `docs/ears/` | `feature-forge` |
+| BDD | behaviour as Given/When/Then scenarios | `docs/bdd/` | `bdd-scenarios` |
+| ADR | decisions that are hard to reverse | `docs/adr/` | `domain-modeling` |
+| SPEC | the technical design that satisfies the requirements | `docs/spec/` | `design-doc` |
+| TDD | the failing tests that pin the behaviour | `tests/` | `tdd` |
+| IPLAN | ordered implementation steps | `.scratch/` | `create-implementation-plan`; `to-tickets` publishes it to Jira |
+| Code | | `src/` | `implement` |
+
+Rules of the chain:
+
+- Start a stage only from the agreed artifact of the stage before it. A missing upstream document is written first, never skipped.
+- Write each artifact to the folder in the table, named `NNNN-<slug>.md`, even when the skill's own instructions name another place (`feature-forge` says `specs/`, `create-implementation-plan` says `/plan/`).
+- The file name gives the document its ID: `docs/ears/0003-<slug>.md` is `EARS-0003`, and its first heading is `# EARS-0003: <title>`. Anything inside a document that a later stage will refine carries a short ID at the start of its line (`- BR-2: …`, `- FR-3: …`, `- AC-1: …`, `### D-1 …`).
+- Every document after the BRD has a `**Derived from:**` line citing the upstream document IDs, and cites the items it refines as `DOC-ID/ITEM` (`PRD-0002/FR-3`) where it uses them. Citations point backwards along the chain only, and every one must resolve. `sh scripts/docs-check.sh` verifies this; the edit hook runs it after every change under `docs/`, and the `docs-check` skill repairs what it reports.
+- Sharpen a fuzzy ask with `grilling` before the BRD or PRD, and run `domain-modeling` the moment a term or decision lands, whatever the stage.
+- A prototype needs only PRD and BDD, then the `prototype` skill. An MVP runs the whole chain.
+
 ## Skills
 
 Skills live in `.agents/skills/<name>/SKILL.md`, vendored by `npx skills` and recorded in `skills-lock.json`. If your harness has not surfaced them, read the `description` line of each `SKILL.md` and load the ones that match the task. The `engineer` agent (`.agents/agents/engineer.md`) routes a task through them.

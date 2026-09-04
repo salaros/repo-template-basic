@@ -19,6 +19,7 @@ Decisions belong to the user; facts are yours to find. Look things up before ask
 | The ask is… | Skill(s) |
 | --- | --- |
 | a request, problem or idea that is not yet sharp | `grilling`; use `grill-with-docs` (grilling plus `domain-modeling`) when terms and decisions should be recorded as they land |
+| a document of the chain in `AGENTS.md` to write: BRD, PRD, EARS, BDD | `brd`, `prd`, `feature-forge`, `bdd-scenarios`, in that order and each derived from the one before; `docs-check` after each |
 | a contract to shape between teams, systems or modules | `codebase-design`, including its design-it-twice reference for comparing alternatives |
 | a settled plan to break into work for engineers or agents | `to-tickets` |
 | a recurring process to specify so it can be delegated | `loop-me` |

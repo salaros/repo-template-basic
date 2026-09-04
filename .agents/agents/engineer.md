@@ -21,6 +21,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a state model or UI question cheaper to build than to argue | `prototype` |
 | a settled plan that needs breaking into work | `to-tickets` |
 | an issue or external PR to classify | `triage` |
+| a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
 | behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets |
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
