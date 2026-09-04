@@ -584,8 +584,6 @@ a.out
 *.orig
 build_src
 .flymake*
-.idea
-.DS_Store
 docs/_build
 docs/_static
 docs/_templates
@@ -598,5 +596,28 @@ bundles/
 vendor/pkg/
 pyenv
 Vagrantfile
+
 ## Agent harness: per-developer overrides
 .claude/settings.local.json
+
+# compiled output
+/dist
+/tmp
+/out-tsc
+
+# IDEs and editors
+.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# misc
+connect.lock
+typings
+
+# System files
+.DS_Store
+Thumbs.db
