@@ -17,6 +17,8 @@
 .agents/hooks/guard-command.js	guard-metadata-not-command.json	0	-	-	dangerous text in an unrelated payload field (not the command) is ignored
 .agents/hooks/guard-command.js	guard-quoted-in-command.json	0	-	-	a dangerous phrase quoted as data inside another command's own arguments is not treated as an invocation
 .agents/hooks/session-start.js	empty.json	0	-	branch:	session brief always exits 0
+scripts/check-staged-docs.js --dry-run	staged-chain.txt	0	-	would check the staged chain	a staged chain document triggers the check
+scripts/check-staged-docs.js --dry-run	staged-none.txt	0	-	nothing staged	a commit touching no chain file is skipped
 scripts/on-manifest-change.js --dry-run	paths-lock.txt	0	-	would run: node scripts/skills.js install	a changed skills lock restores the skills
 scripts/on-manifest-change.js --dry-run	paths-package-json.txt	0	-	nothing to restore	package.json alone restores nothing while no lock file exists
 scripts/on-manifest-change.js --dry-run	paths-package-json.txt	0	plant package-lock.json {}	would run: npm install	package.json restores npm when package-lock.json exists

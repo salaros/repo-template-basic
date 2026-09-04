@@ -10,6 +10,21 @@ const path = require("path");
 const lib = require("../lib");
 const docsCheck = require("../../../scripts/docs-check");
 
+// Git skips a hook that is not executable, and says nothing about it. On Windows core.fileMode is
+// normally false, so chmod is a no-op and a hook added there is recorded 100644: it runs for its
+// author and silently never runs on Linux or macOS. Only `git update-index --chmod=+x <file>` fixes
+// the mode Git records, so the mode in the index is what this asserts.
+function gitHooksAreExecutable(t) {
+    const r = lib.run("git", ["ls-files", "-s", "--", ".githooks"]);
+    if (r.status !== 0) { console.log("skip .githooks mode check: not a git checkout"); return; }
+    const rows = r.output.split(/\r?\n/).filter(Boolean).map(l => l.split(/\s+/));
+    t.ok(rows.length > 0, "git tracks files under .githooks/", r.output);
+    const notExecutable = rows.filter(([mode]) => mode !== "100755").map(row => row[row.length - 1]);
+    t.ok(!notExecutable.length,
+        "every .githooks/ hook is committed executable (git update-index --chmod=+x <file>)",
+        notExecutable.join(", "));
+}
+
 // The lock file and .agents/skills must agree. This is breakage, not bookkeeping: a skill recorded
 // in the lock but absent from disk means a damaged or partial checkout, and `skills.js install`
 // fixes it. Nothing here requires a project to route, document or tabulate the skills it installs.
@@ -179,6 +194,7 @@ function docsSiteRendersTheChain(t) {
 }
 
 module.exports = [
+    gitHooksAreExecutable,
     noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,

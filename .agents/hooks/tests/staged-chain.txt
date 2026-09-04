@@ -1,0 +1,3 @@
+src/main.ts
+docs/brd/0001-x.md
+AGENTS.md
