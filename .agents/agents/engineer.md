@@ -33,6 +33,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
 | a Figma design or node URL to build | `figma` for the MCP server and its design context, then `figma-implement-design` for the code. Work from the link the designer gives you: the server reads the node it names, it does not browse the file |
 | React or Next.js code | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
+| ASP.NET Core code, when `MEMORY.md` gives the stack as .NET: Blazor, Razor Pages, MVC, Minimal APIs, Web APIs, SignalR, gRPC, middleware, DI, configuration, auth, or a framework upgrade | `aspnet-core` |
 | something to drive in a browser or Electron app | `agent-browser` |
 | a skill, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
 | the user wanting to learn a topic | `teach` |
