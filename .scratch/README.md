@@ -1,0 +1,10 @@
+# Scratch
+
+Committed working files that are not product code: feature specs, locally drafted tickets, and throwaway prototypes that have not yet earned a branch.
+
+- One folder per feature: `.scratch/<feature-slug>/`
+- The spec: `.scratch/<feature-slug>/spec.md`
+- Tickets drafted before they are published to Jira: `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order
+- `code-review` looks here for the spec of a branch when the commits reference no issue.
+
+Delete a feature folder once its tickets live in Jira and the work is merged.

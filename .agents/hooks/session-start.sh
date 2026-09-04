@@ -10,13 +10,13 @@ echo "branch: $branch"
 
 [ -f .git/hooks/post-merge ] || echo "git hooks: not installed. Run: sh scripts/githooks-init.sh"
 
-if command -v node >/dev/null 2>&1 && [ -f skills.json ]; then
-    missing=$(node -e '
+if command -v node >/dev/null 2>&1 && [ -f skills-lock.json ]; then
+    node -e '
         const fs = require("fs");
-        const want = Object.values(require("./skills.json").sources).flat();
-        console.log(want.filter(s => !fs.existsSync(".agents/skills/" + s + "/SKILL.md")).join(" "));
-    ' 2>/dev/null)
-    [ -n "$missing" ] && echo "skills missing from .agents/skills: $missing. Run: sh scripts/skills-install.sh"
+        const locked = Object.keys(require("./skills-lock.json").skills);
+        const missing = locked.filter(s => !fs.existsSync(".agents/skills/" + s + "/SKILL.md"));
+        if (missing.length) console.log("skills in skills-lock.json but missing from .agents/skills: " + missing.join(" ") + ". Run: sh scripts/skills-install.sh");
+    ' 2>/dev/null
 fi
 
 [ -f CONTEXT-MAP.md ] && echo "domain: multi-context, start at CONTEXT-MAP.md"

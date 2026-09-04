@@ -1,8 +1,11 @@
 #!/bin/sh
 # scripts/skills-install.sh
-# Installs every skill listed in skills.json into .agents/skills and links it into the
-# harness directories listed there (e.g. .claude/skills), using `npx skills add`.
-# Then normalises the links so git can track them (see skills-relink.sh).
+# Restores every skill recorded in skills-lock.json into .agents/skills with
+# `npx skills experimental_install`, then normalises the harness links (see skills-relink.sh).
+# Skills are committed, so a normal clone never needs this; run it when .agents/skills is
+# missing or damaged, or after a merge that changed the lock file.
+# To add a skill, use the CLI directly and commit the result:
+#   npx skills add <owner/repo> -s <skill> -a claude-code -y && sh scripts/skills-relink.sh
 # Usage: sh scripts/skills-install.sh
 set -e
 
@@ -11,18 +14,8 @@ script_dir=$(cd -P -- "$(dirname -- "$0")" && pwd)
 cd "$(dirname -- "$script_dir")"
 
 command -v node >/dev/null 2>&1 || { echo "node is required (npx skills is a Node CLI)" >&2; exit 1; }
-[ -f skills.json ] || { echo "skills.json not found in $(pwd)" >&2; exit 1; }
+[ -f skills-lock.json ] || { echo "skills-lock.json not found in $(pwd)" >&2; exit 1; }
 
-agents=$(node -p 'require("./skills.json").agents.join(",")')
-
-# One `npx skills add` per source: "<source> <skill,skill,...>" per line
-node -e '
-    const m = require("./skills.json");
-    for (const [source, skills] of Object.entries(m.sources)) console.log(source, skills.join(","));
-' | while read -r source skills; do
-    echo "==> $source: $skills"
-    npx --yes skills@latest add "$source" -s "$skills" -a "$agents" -y
-done
-
+npx --yes skills@latest experimental_install
 sh "$script_dir/skills-relink.sh"
-echo "Skills installed. Review skills-lock.json and the harness links, then commit."
+echo "Skills restored from skills-lock.json."
