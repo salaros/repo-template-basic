@@ -1,6 +1,8 @@
 # Issue tracker: Jira (Atlassian MCP)
 
-Issues and specs for this repo live in Jira. Agents reach Jira through the **Atlassian Rovo MCP server** (`https://mcp.atlassian.com/v2/mcp`), registered in `.mcp.json` (Claude Code, Cursor) and `opencode.json` (OpenCode) at the repo root; the server must be authorised once per tool (OAuth in the tool's MCP settings). Tool names below are the v2 names. If no Jira tools are available in your session, tell the user to authorise the Atlassian connector rather than falling back to another tracker.
+A tracker is optional. When `MEMORY.md` records `Jira: none` this file does not apply: work items live in `docs/` and under `.scratch/`, and a skill that needs a tracker says so instead of guessing at one. The rest of this file describes the tracker a project has when it has one.
+
+Issues and specs for this repo live in Jira. Agents reach Jira through the **Atlassian Rovo MCP server** (`https://mcp.atlassian.com/v2/mcp`), registered in `.mcp.json` (Claude Code, Cursor) and `opencode.json` (OpenCode) at the repo root; the server must be authorised once per tool (OAuth in the tool's MCP settings). Tool names below are the v2 names. If the project uses Jira and no Jira tools are available in your session, tell the user to authorise the Atlassian connector rather than falling back to another tracker.
 
 **Project key:** `TODO-PROJECT-KEY` _(replace with the Jira project key, e.g. `CC`; every operation below is scoped to it)._
 

@@ -1,8 +1,10 @@
 #!/bin/sh
 # .githooks/pre-commit
-# Before a commit lands, check the documentation chain as the commit will record it.
+# Before a commit lands, refuse an unconfigured clone, then check the documentation chain as the
+# commit will record it.
 # Git runs this through core.hooksPath, set once per clone by `node scripts/githooks-init.js`.
 # To try the dispatch by hand: printf 'docs/brd/0001-x.md\n' | node scripts/check-staged-docs.js --dry-run
 # To commit past a failure: git commit --no-verify
 cd "$(git rev-parse --show-toplevel)" || exit 1
+node scripts/check-initialised.js commit || exit 1
 git diff --cached --name-only --diff-filter=ACMRD | node scripts/check-staged-docs.js

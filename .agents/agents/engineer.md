@@ -21,7 +21,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | --- | --- |
 | a plan, decision or idea that is not yet sharp | `grilling`; add `domain-modeling` the moment a term or decision lands |
 | a state model or UI question cheaper to build than to argue | `prototype` |
-| a settled plan that needs breaking into work | `to-tickets` |
+| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker; with none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
 | an issue or external PR to classify | `triage` |
 | a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
@@ -31,7 +31,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | "what did we agree to fix later" | `duck-debt` builds a read-only ledger from the `TODO`, `FIXME`, `HACK` and `XXX` comments, tiered by whether each one carries an issue link; `ponytail-debt` for the `ponytail:` comments that skill leaves behind |
 | behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
 | new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
-| a Figma design or node URL to build | `figma` for the MCP server and its design context, then `figma-implement-design` for the code. Work from the link the designer gives you: the server reads the node it names, it does not browse the file |
+| a Figma design or node URL to build, when the project has designs | `figma` for the MCP server and its design context, then `figma-implement-design` for the code. Work from the link the designer gives you: the server reads the node it names, it does not browse the file |
 | React or Next.js code | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
 | ASP.NET Core code, when `MEMORY.md` gives the stack as .NET: Blazor, Razor Pages, MVC, Minimal APIs, Web APIs, SignalR, gRPC, middleware, DI, configuration, auth, or a framework upgrade | `aspnet-core` |
 | structure being added or reshaped in C#, when `MEMORY.md` gives the stack as .NET: a new service, handler, provider, repository or abstraction | `dotnet-design-pattern-review`, pointed at the types you added. It reviews and suggests without editing. Its required patterns describe a CLI or host application (`CommandHandler<TOptions>`, `SetupCommand(IHost host)`, `.resx` resource managers), so weigh each against what this project actually is rather than adopting them because the checklist names them. A one-line fix changes no structure and needs none of this |
@@ -40,7 +40,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | the user wanting to learn a topic | `teach` |
 | a recurring workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |
-| a fresh clone of this template, or a stack or Jira project that changed | `project-init` |
+| a fresh clone of this template, or a stack or issue tracker that changed | `project-init` |
 | a capability nobody here has a skill for yet | `find-skills` |
 | the issue tracker or triage labels to switch | `setup-matt-pocock-skills` |
 | a container, pipeline, deployment, Git hook or anything else the code runs on | hand to the `devops` agent |

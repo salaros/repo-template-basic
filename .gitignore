@@ -628,3 +628,12 @@ Thumbs.db
 
 # Ignore the store folder for tools, which is used to cache downloaded dependencies
 tools/.store
+
+# Ignore the harness's own skill directories, which are not part of the project
+.agents/skills/**/.github/
+.agents/skills/**/scripts/
+.agents/skills/**/LICENSE
+
+# The project-init gate (.githooks/pre-commit, pre-push): create this empty file in a clone
+# that has no project to configure, such as the template repo itself. Local, never committed.
+.skip-project-init

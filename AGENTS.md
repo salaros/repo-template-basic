@@ -8,7 +8,7 @@ Each folder's README says what belongs in it and how it is organised: `src/`, `t
 
 ## Project
 
-`MEMORY.md` at the root holds the facts no file derives: what the project is, where its requirements live, the stack, the Jira project. Read it first. The `project-init` skill writes it; until it exists this is still an unconfigured template, and that skill is the first thing to run.
+`MEMORY.md` at the root holds the facts no file derives: what the project is, where its requirements live, the stack, and the issue tracker if the project has one. Read it first. The `project-init` skill writes it; until it exists this is still an unconfigured template, and that skill is the first thing to run. The `pre-commit` and `pre-push` hooks refuse to let work leave a clone whose `MEMORY.md` is missing or still holds `<placeholders>`, unless an empty `.skip-project-init` at the root says this clone has no project to configure.
 
 ## Documentation
 
@@ -54,7 +54,7 @@ Skills are vendored: add or update them with `npx skills` (then `node scripts/sk
 
 ### Issue tracker
 
-Jira, through the Atlassian MCP server. See `docs/agents/issue-tracker.md`.
+Optional. A project may plan entirely in `docs/`, and `MEMORY.md` then records `Jira: none`; only `to-tickets` needs a tracker, and it asks when someone reaches for it. When there is one it is Jira, through the Atlassian MCP server. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -76,6 +76,6 @@ Single-context: `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domai
 
 - Install the Git hooks once per clone: `node scripts/githooks-init.js`.
 - Hook scripts for agent harnesses are in `.agents/hooks/`; a blocked command means the guard there fired, so ask the user rather than working around it.
-- Write commit messages as conventional commits: `<type>(<scope>)?!?: <description>`, type one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`, subject at most 72 characters with no full stop, and a description of at least four words: "fixing bugs" and "implemented some stuff" are rejected. Every commit also carries a body, separated from the subject by a blank line — the subject says what changed, the body says why. Git's own trailers are metadata, so a body that is only a `Refs:` line does not count. Cite the Jira issue key in the subject or a trailing `Refs: AB-42` line; leaving it out is a warning, not a rejection. The `git-commit` skill writes these messages; the `commit-msg` Git hook rejects anything that is not a conventional commit, and `git commit --no-verify` overrides it.
+- Write commit messages as conventional commits: `<type>(<scope>)?!?: <description>`, type one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`, subject at most 72 characters with no full stop, and a description of at least four words: "fixing bugs" and "implemented some stuff" are rejected. Every commit also carries a body, separated from the subject by a blank line — the subject says what changed, the body says why. Git's own trailers are metadata, so a body that is only a `Refs:` line does not count. Cite the Jira issue key in the subject or a trailing `Refs: AB-42` line; leaving it out is a warning, not a rejection, and a project whose `MEMORY.md` records `Jira: none` is not warned at all. The `git-commit` skill writes these messages; the `commit-msg` Git hook rejects anything that is not a conventional commit, and `git commit --no-verify` overrides it.
 - Run `humanizer` over prose you write for a person to read, before you hand it over or commit it: a document in `docs/`, a commit message, a pull request description, an email, anything published on the user's behalf. It removes inflated claims, sales language, stock AI words, filler and formulaic structure without changing what the text says, so the writing sounds like the person it is sent on behalf of. Files written for agents are the exception: `AGENTS.md`, `SKILL.md` and the agent route tables follow `writing-for-agents` instead.
 - Ask questions through the harness's question tool, never as plain text: every interview a skill runs (`grilling`, `grill-with-docs`, `brd`, `prd`, `feature-forge`, `project-init`, `to-questionnaire`, `teach` and any other), and every confirmation before acting. One call per round, the recommended answer first. Tool names per harness and the fallback for a harness without one are in `docs/agents/questions.md`.

@@ -31,6 +31,42 @@ function claudeSkillLinksAreSymlinks(t) {
         notLinks.slice(0, 10).join(", "));
 }
 
+// The project-init gate. Exercised against temp directories rather than this checkout, whose own
+// answer depends on whether the developer running the suite has created the marker file.
+function initialisationGateAnswersEveryState(t) {
+    const init = require("../../../scripts/check-initialised");
+    const full = ["# Project memory", "", "- **Name:** Acme Billing", "- **Purpose:** Invoices customers monthly.",
+        "- **Requirements:** jira:AB-1", "- **Unit type:** service", "- **Language:** C#",
+        "- **Runtime / package manager:** .NET 9 / NuGet", "- **Jira:** https://acme.atlassian.net, project `AB`", ""].join("\n");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "init-gate-"));
+    const write = (name, text) => { fs.writeFileSync(path.join(dir, name), text); };
+    const clear = () => { for (const f of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, f)); };
+    try {
+        t.ok(!init.check(dir).ok, "an unconfigured clone is blocked", init.check(dir).reason);
+
+        write("MEMORY.md", "");
+        t.ok(!init.check(dir).ok, "an empty MEMORY.md is blocked", init.check(dir).reason);
+
+        write("MEMORY.md", full.replace("C#", "<language>"));
+        const placeheld = init.check(dir);
+        t.ok(!placeheld.ok && placeheld.missing.includes("Language"),
+            "a fact left as a <placeholder> is blocked and named", placeheld.reason);
+
+        write("MEMORY.md", full.split("\n").filter(l => !l.includes("Runtime")).join("\n"));
+        t.ok(!init.check(dir).ok, "a missing stack line is blocked", init.check(dir).reason);
+
+        write("MEMORY.md", full.split("\n").filter(l => !l.includes("Jira:")).join("\n"));
+        t.ok(init.check(dir).ok, "a project with no issue tracker at all passes", init.check(dir).reason);
+
+        write("MEMORY.md", full);
+        t.ok(init.check(dir).ok, "a MEMORY.md with every required fact passes", init.check(dir).reason);
+
+        clear();
+        write(".skip-project-init", "");
+        t.ok(init.check(dir).ok, "the marker file passes a clone with no MEMORY.md at all", init.check(dir).reason);
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+}
+
 function gitHooksAreExecutable(t) {
     const r = lib.run("git", ["ls-files", "-s", "--", ".githooks"]);
     if (r.status !== 0) { console.log("skip .githooks mode check: not a git checkout"); return; }
@@ -212,6 +248,7 @@ function docsSiteRendersTheChain(t) {
 
 module.exports = [
     gitHooksAreExecutable,
+    initialisationGateAnswersEveryState,
     claudeSkillLinksAreSymlinks,
     noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
