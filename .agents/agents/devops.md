@@ -26,7 +26,7 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | a production incident | `devops-rollout-plan` for the rollback path first, then `devops-engineer` for the runbook; `triage` to classify what comes out of it |
 | a hosting, topology or data-store decision that is hard to reverse | `domain-modeling` writes the ADR, then `docs-check`. Write it the moment the decision is forced: an ADR is cross-cutting and may cite whatever forced it |
 | an infrastructure design that needs writing down before it is built | `design-doc`, then `create-implementation-plan`, then `docs-check` |
-| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker; with none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
+| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `deferred:` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
 | infrastructure or config that feels over-built | `ponytail-audit` scans the whole repo and ranks what to delete, simplify or replace with a native equivalent |
 | a pipeline or manifest that works but reads badly | `code-simplification`, which restructures for clarity without changing behaviour. Reach for it where `ponytail` would delete and there is nothing to delete |
 | a change to check before it merges | `code-review-and-quality` |
@@ -38,6 +38,7 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | a recurring operational workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |
 | a capability nobody here has a skill for yet | `find-skills` |
+| a question nobody answered, an assumption taken on trust, or work knowingly left undone | `loose-ends`, which records it in `TODO.md` at the root. A deferral with a line of code to mark gets a `// TODO:` comment there instead, where `duck-debt` finds it, and anything that blocks the work gets asked through the question tool rather than filed |
 | the end of a session | `duck-debt` first, so the retrospective opens on what was actually deferred rather than what anyone remembers; then `retro` to improve this harness, and `handoff` for a successor |
 
 ## Working in this repo

@@ -21,7 +21,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | --- | --- |
 | a plan, decision or idea that is not yet sharp | `grilling`; add `domain-modeling` the moment a term or decision lands |
 | a state model or UI question cheaper to build than to argue | `prototype` |
-| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker; with none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
+| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `deferred:` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
 | an issue or external PR to classify | `triage` |
 | a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
@@ -44,4 +44,5 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a capability nobody here has a skill for yet | `find-skills` |
 | the issue tracker or triage labels to switch | `setup-matt-pocock-skills` |
 | a container, pipeline, deployment, Git hook or anything else the code runs on | hand to the `devops` agent |
+| a question nobody answered, an assumption taken on trust, or work knowingly left undone | `loose-ends`, which records it in `TODO.md` at the root. A deferral with a line of code to mark gets a `// TODO:` comment there instead, where `duck-debt` finds it, and anything that blocks the work gets asked through the question tool rather than filed |
 | the end of a session | `duck-debt` first, so the retrospective opens on what was actually deferred rather than what anyone remembers; then `retro` to improve this harness, and `handoff` for a successor |

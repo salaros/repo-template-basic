@@ -24,7 +24,8 @@ Every document carries a `**Derived from:**` line, the BRD included. Where the c
 | a request, problem or idea that is not yet sharp | `grilling`; use `grill-with-docs` (grilling plus `domain-modeling`) when terms and decisions should be recorded as they land. Write the interview to `.scratch/<slug>/interview.md`, since a document derived from a conversation cites that file |
 | a document of the chain in `AGENTS.md` to write: BRD, PRD, EARS, BDD | `brd`, `prd`, `feature-forge`, `bdd-scenarios`, in that order, each derived from the one before and the first from a source; `docs-check` after each |
 | a contract to shape between teams, systems or modules | `codebase-design`, including its design-it-twice reference for comparing alternatives |
-| a settled plan to break into work for engineers or agents | `to-tickets`, when the project has an issue tracker (`MEMORY.md` says so). With none, leave the work items as the drafts `to-tickets` writes under `.scratch/<feature-slug>/issues/` and say where they are |
+| a settled plan to break into work for engineers or agents | `to-tickets`, when the project has an issue tracker (`MEMORY.md` says so): hand it the open `deferred:` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, leave the work items as the drafts `to-tickets` writes under `.scratch/<feature-slug>/issues/` and say where they are |
+| a question stakeholders have not answered, an assumption a document rests on, or scope knowingly left out | `loose-ends`, which records it in `TODO.md` at the root, so it outlives the `.scratch/` folder it came from. Anything that blocks the document gets asked through the question tool rather than filed |
 | a recurring process to specify so it can be delegated | `loop-me` |
 | someone to be taught a topic or tool | `teach` |
 | a skill, an `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |

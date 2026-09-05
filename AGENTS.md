@@ -48,7 +48,7 @@ Rules of the chain:
 
 Skills live in `.agents/skills/<name>/SKILL.md`, vendored by `npx skills` and recorded in `skills-lock.json`. If your harness has not surfaced them, read the `description` line of each `SKILL.md` and load the ones that match the task. The agents in `.agents/agents/` route a task through them: `engineer`, `devops`, `business-analyst`, `assistant`.
 
-Skills are vendored: add or update them with `npx skills` (then `node scripts/skills.js relink`) instead of editing them in place.
+Skills are vendored: add or update them with `npx skills` instead of editing them in place. Run `node scripts/skills.js relink` afterwards, and after writing a local skill by hand, since it is what creates the `.claude/skills` link a harness needs to see the skill at all.
 
 ## Agent skills
 

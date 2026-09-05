@@ -31,6 +31,20 @@ function claudeSkillLinksAreSymlinks(t) {
         notLinks.slice(0, 10).join(", "));
 }
 
+// A harness surfaces the skills it can see, so a skill with no link is a skill that does not exist
+// as far as the agent is concerned. `npx skills` links what it vendored and nothing else, which is
+// how a local skill written by hand goes missing; `node scripts/skills.js relink` creates the rest.
+function everyInstalledSkillIsLinked(t) {
+    const skills = ".agents/skills", links = ".claude/skills";
+    if (!fs.existsSync(skills) || !fs.existsSync(links)) { console.log("skip skill link check: no skills directories"); return; }
+    const installed = fs.readdirSync(skills).filter(n => fs.existsSync(path.join(skills, n, "SKILL.md")));
+    t.ok(installed.length > 0, "skills are installed under .agents/skills/");
+    const unlinked = installed.filter(n => { try { fs.lstatSync(path.join(links, n)); return false; } catch { return true; } });
+    t.ok(!unlinked.length,
+        "every installed skill has a .claude/skills/ link (node scripts/skills.js relink)",
+        unlinked.slice(0, 10).join(", "));
+}
+
 // The project-init gate. Exercised against temp directories rather than this checkout, whose own
 // answer depends on whether the developer running the suite has created the marker file.
 function initialisationGateAnswersEveryState(t) {
@@ -250,6 +264,7 @@ module.exports = [
     gitHooksAreExecutable,
     initialisationGateAnswersEveryState,
     claudeSkillLinksAreSymlinks,
+    everyInstalledSkillIsLinked,
     noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,

@@ -9,7 +9,7 @@
 //   node scripts/skills.js list             every installed skill: name, invocation, agents, source
 //   node scripts/skills.js missing          skills in the lock but not on disk, one per line; exit 1 if any
 //   node scripts/skills.js vendored <name>  exit 0 when <name> is recorded in skills-lock.json
-//   node scripts/skills.js relink           rewrite <dir>/skills/<name> links into .agents/skills as relative symlinks
+//   node scripts/skills.js relink           link every installed skill into each <dir>/skills, as a relative symlink
 //   node scripts/skills.js install          restore every skill in skills-lock.json with npx skills, then relink
 const fs = require("fs");
 const path = require("path");
@@ -64,11 +64,18 @@ const commands = {
         process.exit(lock()[name] ? 0 : 1);
     },
     relink() {
-        // `npx skills` creates absolute junctions on Windows; Git needs relative symlinks.
+        // `npx skills` creates absolute junctions on Windows; Git needs relative symlinks. It also
+        // only links what it vendored, so a local skill written by hand has no link at all and the
+        // harness never sees it. A directory that already holds skill links gets one per installed
+        // skill, which is what makes a hand-written skill visible without anyone remembering to
+        // create the link. Directories are discovered rather than listed: whichever harnesses this
+        // clone wires up, the ones with a skills/ folder are the ones that want links.
         const canonical = path.resolve(root, SKILLS);
         const same = (a, b) => process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
         const inside = p => same(p.slice(0, canonical.length), canonical);
-        let fixed = 0, kept = 0;
+        const present = p => { try { fs.lstatSync(p); return true; } catch { return false; } };
+        let fixed = 0, kept = 0, added = 0;
+        const dangling = [];
         for (const top of fs.readdirSync(root, { withFileTypes: true })) {
             if (!top.isDirectory() || top.name === ".agents" || top.name === ".git") continue;
             const dir = path.join(root, top.name, "skills");
@@ -84,14 +91,25 @@ const commands = {
                 const target = fs.readlinkSync(link).replace(/^\\\\\?\\/, "");
                 const resolved = path.resolve(dir, target);
                 if (!inside(resolved)) continue;                    // points elsewhere: not ours
+                // The skill it names is gone: uninstalled, or renamed. Reported, never deleted,
+                // because the answer is a `npx skills` command rather than a guess made here.
+                if (!fs.existsSync(resolved)) { dangling.push(`${top.name}/skills/${name}`); continue; }
                 const rel = path.relative(dir, resolved).split(path.sep).join("/");
                 if (!path.isAbsolute(target) && target.split(path.sep).join("/") === rel) { kept++; continue; }
                 try { fs.unlinkSync(link); } catch { fs.rmdirSync(link); }   // dir symlinks and junctions on Windows need rmdir
                 fs.symlinkSync(rel, link, "dir");
                 fixed++;
             }
+            for (const name of installed()) {
+                const link = path.join(dir, name);
+                if (present(link)) continue;
+                const rel = path.relative(dir, path.join(canonical, name)).split(path.sep).join("/");
+                fs.symlinkSync(rel, link, "dir");
+                added++;
+            }
         }
-        console.log(`skill links: ${fixed} rewritten as relative, ${kept} already relative`);
+        console.log(`skill links: ${added} created, ${fixed} rewritten as relative, ${kept} already relative`);
+        for (const d of dangling) console.log(`${d} points at a skill that is not installed: remove the link, or restore the skill`);
     },
     install() {
         // Skills are committed, so a normal clone never needs this; run it when .agents/skills is missing
