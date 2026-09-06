@@ -1,0 +1,52 @@
+# scripts/harness-files.tsv: what scripts/update-harness.js does with each path the upstream ships.
+# The upstream is a starting point that keeps moving, and a repo made from it has its own work in the
+# same tree. This table is the line between the two: which files belong to the harness and travel, and
+# which belong to the project and never do.
+# The first row whose path matches wins, so the specific rows come before the general ones. A path is
+# an exact file, or a prefix ending in / that matches everything under it.
+# Columns, tab-separated: path | policy | why
+#   merge  three-way merge against the upstream commit the receipt names. A file nobody touched takes
+#          the new version outright; an edited one keeps its edits and gains the changes around them;
+#          a real collision is written with conflict markers and reported. Created if absent.
+#   seed   written only when it is absent, and never touched again. Scaffolding the project grows into.
+#   skip   never written by an update, at all. The project's own, or generated from something else.
+#   skills the vendored skill tree, which merges by name rather than by content: see update-harness.js.
+#   optional:<flag> installed as seed, but only when update-harness.js is given --<flag>.
+#   template the upstream’s own: never installed anywhere. Nothing a host repo runs reaches it, and shipping
+#          it would leave every project carrying the machinery that maintains the upstream rather than the
+#          harness that serves the project.
+README.md	skip	The project's front page. The upstream's is about the harness itself.
+LICENSE	skip	The project chooses its own.
+MEMORY.md	skip	Written by project-init, and the one file that says what this project is.
+TODO.md	skip	The loose-ends ledger, all of it the project's own.
+THIRD-PARTY-NOTICES.md	skip	Generated from the project's own lock file after the update, not copied.
+stylecop.json	template	.NET analyzer configuration. Meaningless in a repo that is not .NET, and confusing to find there.
+opencode.json	template	Wiring for one agent tool. A team that does not use OpenCode would carry dead config.
+tools/docs-site/	optional:astro-docs	The Astro site that renders the chain. Optional, and nothing in the harness reaches it: install it with --astro-docs.
+package.json	template	The npm wrapper that publishes the installer. Whatever stack lands in a project’s src/ writes its own.
+scripts/update-harness.js	template	The installer. A project updates with npx @salaros/ai-harness, which clones the upstream, so it needs no copy of this.
+scripts/harness-files.tsv	template	This table. Read from the upstream checkout during an update, never from the project.
+.agents/hooks/test.js	template	The harness suite: fixtures that prove the harness. check-edit.js skips it where it is absent.
+.agents/hooks/tests/	template	Its fixtures.
+.github/	template	CI that runs the suite, which does not travel either. A project brings its own.
+skills-lock.json	skills	Merged as a union, so a skill the project vendored itself survives.
+.agents/skills/	skills	Added and updated, never removed: the project may install its own.
+.claude/skills/	skills	Symlinks, rebuilt by skills.js relink rather than copied.
+docs/agents/	merge	Harness config the skills read. issue-tracker.md carries the project key, so it merges rather than being overwritten.
+docs/	seed	The documentation chain. Every artifact in it is the project's.
+src/	seed	The project's code.
+tests/	seed	The project's tests.
+tools/	seed	Project tooling. The docs site lands on a first install and is then the project's to change.
+workflows/	seed	Workflow specs written by loop-me, one per project.
+.scratch/	seed	Working notes, never shared.
+AGENTS.md	merge	The map. The upstream adds sections; the project adds its own rules to the same file.
+CLAUDE.md	merge	One line pointing at AGENTS.md, but a project may add to it.
+CODING_STANDARDS.md	merge	Read by code-review. The upstream's is a starting set.
+.gitignore	merge	Crafted at the root and added to by whatever stack lands.
+.editorconfig	seed	Copied once so a new repo has one. A project that has tuned it keeps its own.
+.gitattributes	merge	As above.
+.mcp.json	merge	MCP servers: the upstream's, plus whatever the project adds.
+.claude/settings.json	merge	Harness wiring for Claude Code, plus the project's own permissions.
+.agents/	merge	Agents, routing and the hook scripts: the harness itself.
+.githooks/	merge	The Git hooks. A hook the project wrote itself is not in the upstream, so it is left alone.
+scripts/	merge	The checks the Git hooks and the skills call, and the tables they read.

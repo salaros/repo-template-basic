@@ -1,0 +1,30 @@
+{
+  "name": "@salaros/ai-harness",
+  "version": "0.1.0",
+  "description": "Installs and updates the agent harness from its upstream repository: hooks, skills, agents and the documentation chain, merged into an existing repository without touching its own work.",
+  "bin": {
+    "ai-harness": "scripts/update-harness.js"
+  },
+  "files": [
+    "scripts/update-harness.js",
+    "scripts/lib.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salaros/ai-harness.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agent",
+    "skills",
+    "claude-code",
+    "git-hooks",
+    "harness",
+    "template"
+  ]
+}
