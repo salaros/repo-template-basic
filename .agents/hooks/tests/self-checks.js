@@ -45,6 +45,39 @@ function everyInstalledSkillIsLinked(t) {
         unlinked.slice(0, 10).join(", "));
 }
 
+// .agents/routing.md holds the rows more than one agent routes through, in a section per audience:
+// each section names its agents, each agent names its sections, and the two must agree. Either half
+// is a silent failure otherwise. A section nobody names is dead rows; an agent naming a section that
+// does not exist routes nothing, and neither shows up as a broken link or a bad exit code anywhere
+// else. `scripts/skills.js list` reads the same pairing to credit a moved row to the agents that
+// still route it, so this also pins that attribution.
+// The file lives above .agents/agents/ on purpose: .claude/agents is a symlink to that folder, and a
+// harness reads everything in there as an agent definition.
+function agentRoutingSectionsAgreeOnTheirAudience(t) {
+    const dir = ".agents/agents", shared = "routing.md";
+    const file = path.join(".agents", shared);
+    if (!fs.existsSync(file)) { console.log("skip routing section check: no routing.md"); return; }
+    const bodies = {};
+    for (const f of fs.readdirSync(dir).filter(n => n.endsWith(".md"))) {
+        const text = fs.readFileSync(path.join(dir, f), "utf8");
+        const name = (text.match(/^name:\s*(.+)$/m) || [])[1];
+        if (name && text.includes(shared)) bodies[name.trim()] = text;
+    }
+    const sections = fs.readFileSync(file, "utf8").split(/^## /m).slice(1);
+    t.ok(sections.length > 0 && Object.keys(bodies).length > 0,
+        `${shared} has sections and agents point at it`, `${sections.length} section(s), ${Object.keys(bodies).length} agent(s)`);
+    for (const s of sections) {
+        const title = s.split(/\r?\n/)[0].trim();
+        const line = s.match(/^Read by .*$/m);
+        const stated = line ? [...line[0].matchAll(/`([a-z-]+)`/g)].map(m => m[1]).sort() : [];
+        const actual = Object.keys(bodies).filter(n => bodies[n].includes(title)).sort();
+        t.ok(stated.length > 0, `"${title}" says which agents read it, on a "Read by" line`);
+        t.ok(stated.join(",") === actual.join(","),
+            `"${title}" is read by exactly the agents it names`,
+            `names ${stated.join(", ") || "(none)"}; named by ${actual.join(", ") || "(none)"}`);
+    }
+}
+
 // The project-init gate. Exercised against temp directories rather than this checkout, whose own
 // answer depends on whether the developer running the suite has created the marker file.
 function initialisationGateAnswersEveryState(t) {
@@ -265,6 +298,7 @@ module.exports = [
     initialisationGateAnswersEveryState,
     claudeSkillLinksAreSymlinks,
     everyInstalledSkillIsLinked,
+    agentRoutingSectionsAgreeOnTheirAudience,
     noSkillIsMissingFromDisk,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,

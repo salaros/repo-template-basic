@@ -12,23 +12,15 @@ You work through this repo's **skills**: `.agents/skills/<name>/SKILL.md`. Invok
 ## Steps
 
 1. **Understand.** Restate the ask in one sentence and confirm it. Done when the user agrees that is what they want.
-2. **Route.** Pick the matching row below. Done when you have told the user which skill you will use and what it will produce.
+2. **Route.** Pick the matching row from the table below, then from the "The tracker and the wiki" section of `.agents/routing.md`. Done when you have told the user, in their words rather than the skill's, which skill you will use and what it will produce.
 3. **Run** the skill to its own definition of done, then show the result and where it is saved.
 
 ## Route
 
 | The ask is… | Skill |
 | --- | --- |
-| to learn or practise a topic or tool | `teach` |
-| a chore that keeps coming back and could be handed off | `loop-me`, which writes it up as a workflow spec |
-| a way of working that others or an agent should be able to repeat | `writing-for-agents`, which writes it as a skill |
+| a way of working that others or an agent should be able to repeat | `writing-for-agents`, which writes it up as a skill |
 | an email, note or summary someone else will read | `writing-clearly-and-concisely` |
-| something to look up, fill in, or check on a website | `agent-browser` |
-| a page to write, find or tidy up in Confluence, or a space that has grown hard to navigate | `confluence-expert` |
 | a question left unanswered, or something put off until later | `loose-ends`, which writes it into `TODO.md` at the root so it is still there after this session ends |
 
-## Rules
-
-- Confirm before anything leaves the machine: a form submission, a message, a purchase, a sign-in.
-- Never type passwords, card numbers or personal identifiers; ask the user to do that part.
-- Keep the user's files in the workspace they opened (`MISSION.md`, `NOTES.md`, `workflows/`, lessons), and name every file you create.
+Learning a topic (`teach`), a chore worth writing up as a workflow (`loop-me`), a website to search or fill in (`agent-browser`) and finding a skill for something nothing here covers (`find-skills`) are in `AGENTS.md` ("Working here"), which applies whoever is working. A page or space in Confluence is `confluence-expert`, in "The tracker and the wiki".

@@ -17,6 +17,7 @@ const lib = require("./lib");
 
 const root = lib.chdirRoot();
 const SKILLS = ".agents/skills", AGENTS = ".agents/agents", LOCK = "skills-lock.json";
+const SHARED = ".agents/routing.md", SHARED_REF = "routing.md";
 
 const lock = () => fs.existsSync(LOCK) ? (JSON.parse(fs.readFileSync(LOCK, "utf8")).skills || {}) : {};
 const frontmatter = file => {
@@ -30,29 +31,54 @@ const installed = () => fs.existsSync(SKILLS)
 const agents = () => {   // agent name -> Set of backticked names in its body (Route table and Steps alike)
     const out = {};
     if (!fs.existsSync(AGENTS)) return out;
+    const body = file => fs.readFileSync(file, "utf8").replace(/^---\r?\n[\s\S]*?\r?\n---/, "");
+    const named = text => new Set([...text.matchAll(/`([a-z0-9][a-z0-9-]*)`/g)].map(m => m[1]));
+    // .agents/routing.md holds the rows more than one agent routes through, in a section per
+    // audience. It sits outside AGENTS because .claude/agents is a symlink to that folder and a
+    // harness reads every file in there as an agent. Each section counts for the agents that name
+    // the file and quote the heading, so a row moved there keeps exactly the agents it had.
+    const sections = fs.existsSync(SHARED)
+        ? body(SHARED).split(/^## /m).slice(1).map(s => ({ title: s.split(/\r?\n/)[0].trim(), skills: named(s) }))
+        : [];
     for (const f of fs.readdirSync(AGENTS).filter(n => n.endsWith(".md")).sort()) {
         const file = path.join(AGENTS, f);
-        const name = frontmatter(file).name || f.replace(/\.md$/, "");
-        const body = fs.readFileSync(file, "utf8").replace(/^---\r?\n[\s\S]*?\r?\n---/, "");
-        out[name] = new Set([...body.matchAll(/`([a-z0-9][a-z0-9-]*)`/g)].map(m => m[1]));
+        const name = frontmatter(file).name;
+        if (!name) continue;                                 // frontmatter names an agent; nothing else is one
+        const text = body(file);
+        const skills = named(text);
+        if (text.includes(SHARED_REF)) {
+            for (const sec of sections) if (text.includes(sec.title)) for (const n of sec.skills) skills.add(n);
+        }
+        out[name] = skills;
     }
     return out;
 };
+// AGENTS.md is loaded by every session, agent or not, so a skill it names is reached without any
+// agent routing it: the four that suit any kind of work, and `git-commit`. Reporting those as routed
+// nowhere would bury the case the column is for, a skill nothing at all points at.
+const inAgentsMd = () => fs.existsSync("AGENTS.md")
+    ? new Set([...fs.readFileSync("AGENTS.md", "utf8").matchAll(/`([a-z0-9][a-z0-9-]*)`/g)].map(m => m[1]))
+    : new Set();
+
 const roster = () => {
-    const l = lock(), a = agents();
+    const l = lock(), a = agents(), everywhere = inAgentsMd();
     return installed().map(name => {
         const fm = frontmatter(path.join(SKILLS, name, "SKILL.md"));
         return {
             name,
             invoke: fm["disable-model-invocation"] === "true" ? `\`/${name}\`` : "by description",
             agents: Object.keys(a).filter(k => a[k].has(name)),
+            everywhere: everywhere.has(name),
             source: l[name] ? l[name].source : "local",
         };
     });
 };
 const commands = {
     list() {
-        for (const r of roster()) console.log(`${r.name}\t${r.invoke.replace(/`/g, "")}\t${r.agents.join(",") || "-"}\t${r.source}`);
+        for (const r of roster()) {
+            const where = r.agents.join(",") || (r.everywhere ? "AGENTS.md" : "-");
+            console.log(`${r.name}\t${r.invoke.replace(/`/g, "")}\t${where}\t${r.source}`);
+        }
     },
     missing() {
         const on = new Set(installed());
