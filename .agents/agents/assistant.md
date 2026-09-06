@@ -20,6 +20,7 @@ You work through this repo's **skills**: `.agents/skills/<name>/SKILL.md`. Invok
 | to learn or practise a topic or tool | `teach` |
 | a chore that keeps coming back and could be handed off | `loop-me`, which writes it up as a workflow spec |
 | a way of working that others or an agent should be able to repeat | `writing-for-agents`, which writes it as a skill |
+| an email, note or summary someone else will read | `writing-clearly-and-concisely` |
 | something to look up, fill in, or check on a website | `agent-browser` |
 | a question left unanswered, or something put off until later | `loose-ends`, which writes it into `TODO.md` at the root so it is still there after this session ends |
 

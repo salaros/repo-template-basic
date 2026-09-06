@@ -34,6 +34,7 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | scripts or tooling in this repo being restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-repo scan |
 | behaviour to build or fix in that tooling | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
 | a runbook, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
+| a postmortem, release note or anything else a person will read | `writing-clearly-and-concisely` |
 | the team needing to understand the pipeline they inherited | `teach` |
 | a recurring operational workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |

@@ -37,6 +37,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | structure being added or reshaped in C#, when `MEMORY.md` gives the stack as .NET: a new service, handler, provider, repository or abstraction | `dotnet-design-pattern-review`, pointed at the types you added. It reviews and suggests without editing. Its required patterns describe a CLI or host application (`CommandHandler<TOptions>`, `SetupCommand(IHost host)`, `.resx` resource managers), so weigh each against what this project actually is rather than adopting them because the checklist names them. A one-line fix changes no structure and needs none of this |
 | something to drive in a browser or Electron app | `agent-browser` |
 | a skill, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
+| a document, commit message or pull request description a person will read | `writing-clearly-and-concisely` |
 | the user wanting to learn a topic | `teach` |
 | a recurring workflow to specify | `loop-me` |
 | "that did not land" | `wait-what` |

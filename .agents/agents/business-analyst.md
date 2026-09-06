@@ -29,6 +29,7 @@ Every document carries a `**Derived from:**` line, the BRD included. Where the c
 | a recurring process to specify so it can be delegated | `loop-me` |
 | someone to be taught a topic or tool | `teach` |
 | a skill, an `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |
+| a requirements document, summary or anything else a stakeholder will read | `writing-clearly-and-concisely` |
 | questions to put to stakeholders in writing instead of live | `to-questionnaire` |
 | research, forms or checks on a website | `agent-browser` |
 | a screen, page or flow to put in front of stakeholders as a design rather than prose, and the project uses Figma | `figma` for the MCP server and its design context, then `figma-generate-design` to build the screen from code or a description, reusing the design system's own components and variables instead of hardcoded values |
