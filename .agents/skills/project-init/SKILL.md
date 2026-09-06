@@ -22,7 +22,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | What kind of unit is it? | Unit type | Options: `library`, `cli`, `service`, `monolith`, `frontend` |
    | Which language? | Language | One language (`C#`, `TypeScript`, `Python`) |
    | Which runtime and package manager? | Runtime / package manager | Version included (`.NET 9 / NuGet`, `Node 22 / pnpm`, `Python 3.13 / uv`) |
-   | Which frontend framework? | Frontend | Only when the project has browser code: `React`, `Vue`, or `none`. The `engineer` agent routes its framework skills on this, so a guess here sends it to the wrong ones |
+   | Which frontend framework? | Frontend | Only when the project has browser code: `React`, `Vue`, `Blazor`, or `none`. The `engineer` agent routes its framework skills on this, so a guess here sends it to the wrong ones |
    | Is there an issue tracker? | Jira site | `https://<org>.atlassian.net`, or `none`. A project can plan entirely in `docs/`, and many do before a tracker exists; take `none` at face value and skip the next question |
    | Which Jira project key? | Jira key | Only when a site was given. Upper case, as Jira shows it (`AB`); with the Atlassian MCP authorised, offer the keys `listJiraProjects` returns as options |
 
