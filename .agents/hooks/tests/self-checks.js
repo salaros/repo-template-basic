@@ -10,6 +10,12 @@ const path = require("path");
 const lib = require("../lib");
 const docsCheck = require("../../../scripts/docs-check");
 
+// A harness installed by scripts/update-harness.js has its files on disk and nothing in the index
+// until the project makes its first commit. Both mode checks below assert what the index records, so
+// that state is nothing to assert rather than a failure: saying the hooks are not executable when
+// they have simply never been committed sends the reader looking for a bug that is not there.
+function untracked(dir) { return fs.existsSync(dir); }
+
 // Git skips a hook that is not executable, and says nothing about it. On Windows core.fileMode is
 // normally false, so chmod is a no-op and a hook added there is recorded 100644: it runs for its
 // author and silently never runs on Linux or macOS. Only `git update-index --chmod=+x <file>` fixes
@@ -24,6 +30,7 @@ function claudeSkillLinksAreSymlinks(t) {
     const r = lib.run("git", ["ls-files", "-s", "--", ".claude/skills"]);
     if (r.status !== 0) { console.log("skip .claude/skills mode check: not a git checkout"); return; }
     const rows = r.output.split(/\r?\n/).filter(Boolean).map(l => l.split(/\s+/));
+    if (!rows.length && untracked(".claude/skills")) { console.log("skip .claude/skills mode check: present on disk, not committed yet"); return; }
     t.ok(rows.length > 0, "git tracks entries under .claude/skills/", r.output);
     const notLinks = rows.filter(([mode]) => mode !== "120000").map(row => row[row.length - 1]);
     t.ok(!notLinks.length,
@@ -131,6 +138,7 @@ function gitHooksAreExecutable(t) {
     const r = lib.run("git", ["ls-files", "-s", "--", ".githooks"]);
     if (r.status !== 0) { console.log("skip .githooks mode check: not a git checkout"); return; }
     const rows = r.output.split(/\r?\n/).filter(Boolean).map(l => l.split(/\s+/));
+    if (!rows.length && untracked(".githooks")) { console.log("skip .githooks mode check: present on disk, not committed yet"); return; }
     t.ok(rows.length > 0, "git tracks files under .githooks/", r.output);
     const notExecutable = rows.filter(([mode]) => mode !== "100755").map(row => row[row.length - 1]);
     t.ok(!notExecutable.length,
@@ -253,6 +261,10 @@ function docsCheckMemoryRequirements(t) {
         ["a document that does not exist", ["- **Requirements:** BRD-9999"], 1, "does not exist"],
         ["prose instead of a reference", ["- **Requirements:** the whiteboard"], 1, "is not a document ID"],
         ["no Requirements line", ["# Project", "", "- **Stack:** none yet"], 1, "no Requirements line"],
+        // update-harness.js lays down a MEMORY.md of placeholders when it installs the harness into a
+        // repo that has none, so a fresh install must pass its own checks. check-initialised.js
+        // already blocks every commit until project-init fills them in, and says exactly that.
+        ["a placeholder project-init has not filled in", ["- **Requirements:** <requirements>"], 0, ""],
     ];
     for (const [title, lines, want, needle] of cases) {
         const problems = memory("memory.md", ...lines);

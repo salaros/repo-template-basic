@@ -2,6 +2,12 @@
 // scripts/githooks-init.js
 // Points Git at the committed hooks in .githooks/ (core.hooksPath), so this clone runs them and
 // picks up every change to them on pull; nothing is copied. Run once per clone.
+// It also repairs the one mode that matters. Git runs a hook only when it is executable and says
+// nothing when it is not, so a hook recorded 100644 gates nothing while looking installed. On
+// Windows core.fileMode is false, which means `chmod` does nothing and any `git add` restages the
+// file 100644 -- so a harness installed there, or a hook edited there, loses the bit silently and
+// the loss reaches everyone else on the next push. Setting it here makes every clone self-healing,
+// and the harness suite fails on the mode if this was never run.
 // Usage: node scripts/githooks-init.js
 const fs = require("fs");
 const { spawnSync } = require("child_process");
@@ -10,4 +16,15 @@ const lib = require("./lib");
 lib.chdirRoot();
 const r = spawnSync("git", ["config", "core.hooksPath", ".githooks"], { stdio: "inherit" });
 if (r.status !== 0) process.exit(r.status === null ? 1 : r.status);
-console.log(`Git hooks: core.hooksPath = .githooks (${fs.readdirSync(".githooks").join(" ")})`);
+
+const hooks = fs.readdirSync(".githooks");
+const tracked = lib.run("git", ["ls-files", "-s", "--", ".githooks"]).output
+    .split(/\r?\n/).filter(Boolean).map(l => l.split(/\s+/));
+const wrong = tracked.filter(([mode]) => mode !== "100755").map(row => row[row.length - 1]);
+for (const file of wrong) {
+    try { fs.chmodSync(file, 0o755); } catch { /* the filesystem does not do modes */ }
+    lib.run("git", ["update-index", "--chmod=+x", "--", file]);
+}
+
+console.log(`Git hooks: core.hooksPath = .githooks (${hooks.join(" ")})`);
+if (wrong.length) console.log(`marked executable in the index, stage the change: ${wrong.join(" ")}`);

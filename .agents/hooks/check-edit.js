@@ -31,8 +31,15 @@ const rules = [
         check: () => { const r = docsCheck.check(); return r.problems.length > 0 && `documentation chain check failed (see AGENTS.md, Documentation; fix with the docs-check skill):\n${r.problems.join("\n")}`; },
     },
     {   // The harness itself changed: the suite must still pass (HOOK_TEST stops recursion).
+        // The suite is the template's own, and a repo that installed the harness has the hooks
+        // without the fixtures that prove them. There is nothing to run there, which is not a
+        // failure: reporting one would block every edit to a harness file in every such repo.
         when: /^(?:\.agents\/hooks\/|\.githooks\/|scripts\/(?:on-manifest-change|docs-check|skills|check-staged-docs|format-changed|check-commit-msg|check-initialised|check-todo)\.js$|scripts\/stacks\.tsv$)/,
-        check: file => { if (process.env.HOOK_TEST) return false; const r = lib.node([".agents/hooks/test.js"]); return r.status !== 0 && `hook tests failed after editing ${file}:\n${r.output}`; },
+        check: file => {
+            if (process.env.HOOK_TEST || !fs.existsSync(".agents/hooks/test.js")) return false;
+            const r = lib.node([".agents/hooks/test.js"]);
+            return r.status !== 0 && `hook tests failed after editing ${file}:\n${r.output}`;
+        },
     },
 ];
 

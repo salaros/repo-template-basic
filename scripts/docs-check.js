@@ -153,7 +153,11 @@ function check(root = "docs", agentsFile = "AGENTS.md", memoryFile = "MEMORY.md"
         if (!line) say(memoryFile, "no Requirements line (the project-init skill writes one)");
         else {
             const value = line.replace(/^\s*[-*]?\s*\**Requirements:?\**:?/i, "").trim();
-            if (!/^none yet\b/i.test(value)) {
+            // A `<placeholder>` means project-init has not run. check-initialised.js already blocks
+            // every commit and push until it does, and says so in those words; repeating it here as
+            // a broken citation sends the reader looking for a document that was never named.
+            if (/^<[^>]*>$/.test(value)) { /* unconfigured, and gated elsewhere */ }
+            else if (!/^none yet\b/i.test(value)) {
                 for (const entry of value.split(",").map(s => s.trim()).filter(Boolean)) {
                     const token = entry.split(/\s+/)[0].replace(/^[("'<[]+|[)"'>\].]+$/g, "");
                     if (new RegExp(`^(${prefixes.join("|") || "NONE"})-\\d{4}$`).test(token)) {
