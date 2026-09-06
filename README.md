@@ -1,8 +1,30 @@
-# Basic repo template
+# AI harness
 
 A starting point that does not assume a language or framework: `.gitignore`, `.gitattributes`, Git hooks, a folder layout with a README in every folder, and an AI-agnostic **agent harness** (skills, hook scripts, four agents) that works the same in Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and any other tool that reads `AGENTS.md` and `.agents/skills`.
 
-Requires **Node 18 or newer** (the only runtime the harness needs) and Git; nothing else. The [harness CI workflow](.github/workflows/harness.yml) runs the suite on Ubuntu and Windows. A second workflow, [skills-update](.github/workflows/skills-update.yml), runs `npx skills update` weekly, relinks, regenerates the third-party notice, and commits the result to `development` only if the suite and the chain check still pass; it then opens a pull request promoting `development` to `master`, because a skill is a prompt an agent runs with full permissions and its diff wants a reader.
+Requires **Node 22 or newer** (the only runtime the harness needs) and Git; nothing else. The [harness CI workflow](.github/workflows/harness.yml) runs the suite on Ubuntu and Windows. A second workflow, [skills-update](.github/workflows/skills-update.yml), runs `npx skills update` weekly, relinks, regenerates the third-party notice, and commits the result to `development` only if the suite and the chain check still pass; it then opens a pull request promoting `development` to `master`, because a skill is a prompt an agent runs with full permissions and its diff wants a reader.
+
+## Adding the harness to a repository you already have
+
+Starting a project from scratch is a clone of this repository. Adding the harness to a repository that already exists, and keeping it current afterwards, is one command run from that repository's root:
+
+```bash
+npx @salaros/ai-harness
+```
+
+It installs what the harness needs and nothing else: `AGENTS.md`, the agents and their routing, the skills, the Git hooks, and the checks those hooks call, the documentation-chain validator among them. What maintains the upstream stays behind — the installer itself, the harness test suite and its fixtures, the CI workflows, `package.json`, and the .NET and OpenCode config a project may have no use for.
+
+It never writes `README.md` or `LICENSE`. Under `docs/`, `src/`, `tests/`, `tools/`, `workflows/` and `.scratch/` it adds the folder README where that file is absent and touches nothing else, so a `src/` with code in it gains a README and keeps the code. A first run leaves three skeletons behind when the repo has none: `MEMORY.md` with its six facts still `<placeholder>`, so the initialisation gate says what to run next; an empty `CONTEXT.md` glossary; and a `TODO.md` holding its header and nothing else. Later runs leave all three alone.
+
+Pass `--astro-docs` to also install `tools/docs-site/`, the Astro site that renders the chain in a browser. Nothing in the harness reaches it, so it stays out unless asked for.
+
+Every run proves itself before it finishes. Merging is not checking: the installer knows it wrote a file, not whether the result still works. So it borrows the upstream's own test suite — writes it in, runs it, and takes it away again, leaving the repo as the install left it — and reports what it found. A failure exits non-zero, the same way a conflict does. That is what catches an `AGENTS.md` whose chain table no longer parses, routing sections naming an agent this repo does not have, a skill nothing links to, or a vendored upstream with no licence row. Pass `--no-check` to skip it.
+
+`scripts/harness-files.tsv` is the table behind all of this, one row per path.
+
+Running it again updates. The first run writes `harness-lock.json` naming the upstream commit it took, which gives a later run a merge base: a harness file nobody edited takes the new version, an edited one keeps its edits and gains the changes around them, and only a real collision is written with conflict markers, reported, and exits non-zero. That is how `AGENTS.md` gains a new section while keeping your own rules, and how `docs/agents/issue-tracker.md` keeps your project key.
+
+Skills are added and updated, never removed: one you vendored yourself survives every update, and `skills-lock.json` is merged as a union.
 
 ## Getting started
 
@@ -26,13 +48,14 @@ Requires **Node 18 or newer** (the only runtime the harness needs) and Git; noth
 | `.agents/skills/<name>/` | The canonical, vendored copy of each skill (`SKILL.md` plus its reference files). |
 | `.agents/hooks/` | Harness-neutral hook scripts (see [Hooks](#hooks)). |
 | `.agents/agents/` | Agent definitions (see [Agents](#agents)). |
+| `scripts/update-harness.js`, `scripts/harness-files.tsv`, `harness-lock.json` | The installer, the table of what travels and what does not, and the receipt naming the upstream commit a repo last took. The first two are the upstream’s own and are never installed; the receipt is written into the repo being updated. |
 | `.agents/routing.md` | Route rows shared by some agents but not all, in a section per audience, plus the rule for what earns a row. What every agent needs is in `AGENTS.md` ("Working here") instead, since every session loads that. Above `agents/` because `.claude/agents` is a symlink to that folder and a harness reads everything in it as an agent. |
 | `.claude/` | Claude Code wiring: `skills/*` and `agents` are symlinks into `.agents/`, `settings.json` wires the hooks. |
 | `.githooks/`, `scripts/githooks-init.js` | Git hooks, run through `core.hooksPath` after `githooks-init.js` is run once per clone. They are the only shell scripts left, because Git runs them through its own `sh` on every OS; each is a two-line wrapper piping changed paths into a Node script. `post-merge` feeds `scripts/on-manifest-change.js`, which restores what `scripts/stacks.tsv` says (skills, npm, pnpm, yarn, NuGet, uv). `pre-commit` and `pre-push` both start with `scripts/check-initialised.js`, which refuses an unconfigured clone: `MEMORY.md` must record the six facts that describe the project itself (name, purpose, requirements, unit type, language, runtime), none of them left as a `<placeholder>`. The `Jira` line is not among them: a tracker is a choice, not a property of the code. `pre-commit` then pipes the staged `TODO.md` into `scripts/check-todo.js`, which checks the shape of the loose-ends ledger against the todo-md standard: the `# TODO` header, and an entry carrying a known tag (`#question`, `#assumption`, `#deferred`) and a source the chain would accept. Only checkbox lines are entries, every other line is prose, and an indented subtask inherits its parent's tag and source. It never asks for entries to exist, and it rejects `[x]` and `[-]`, because a settled entry is deleted rather than kept. `pre-commit` then feeds `scripts/check-staged-docs.js`, which blocks a commit that would break the documentation chain. `commit-msg` feeds `scripts/check-commit-msg.js`, which blocks a commit whose message is not a conventional commit (`<type>(<scope>)?!?: <description>`, subject at most 72 characters, a description of at least four words, and a body of real prose after a blank line — trailers such as `Refs:` are metadata and do not count as one); messages Git writes itself for a merge, revert, fixup or squash are left alone. A message citing no Jira issue key is warned about rather than rejected, to encourage the habit without blocking a change nobody has raised a ticket for; the key comes from `docs/agents/issue-tracker.md`, and any `PROJ-123` shape counts until `project-init` records the real one. A project whose `MEMORY.md` records `Issue tracker: none` is not warned: it has no key to cite. A tracker whose references are not `KEY-123` sets `Key format:` in `docs/agents/issue-tracker.md`, so a GitHub-Issues project is warned about `#42` instead. `pre-push` feeds `scripts/format-changed.js`, which checks that the files a push publishes are formatted, using the stack's own formatter from `scripts/stacks.tsv` (`prettier`, `dotnet format` or a project's Husky.NET task runner, `ruff`). It never rewrites files: it reports and blocks, and skips silently when the stack's formatter is not installed. Formatting is checked on push rather than on commit because some formatters load the whole project and cost seconds. The restore, chain and format scripts take `--dry-run`; `check-commit-msg.js` takes the message file, or reads stdin. `git commit --no-verify` and `git push --no-verify` skip them. |
 | `docs/agents/` | Per-repo configuration the skills read: issue tracker, triage labels, domain-doc rules. |
 | `CODING_STANDARDS.md` | Rules the `code-review` skill applies to a diff. A stub until the stack lands; anything a tool enforces stays out of it. |
 | `.editorconfig`, `.gitattributes`, `.gitignore`, `stylecop.json` | Encoding, indentation, line endings, ignored output and analyzer settings. Stack-specific entries are kept when they are inert on other stacks, so no stack is forced. |
-| `.skip-project-init` | Untracked, ignored, created by hand: it tells the initialisation gate that this clone has no project to configure, such as the template's own repo. Never committed, so it stays with whoever made it. |
+| `.skip-project-init` | Untracked, ignored, created by hand: it tells the initialisation gate that this clone has no project to configure, such as the upstream's own repo. Never committed, so it stays with whoever made it. |
 | `workflows/` | Workflow specs written by `loop-me`. |
 | `.scratch/` | Committed working files: feature specs, ticket drafts, prototypes not yet on a branch. |
 | `.mcp.json`, `opencode.json` | MCP server registrations for Claude Code and OpenCode: Atlassian for Jira, Figma for designs. Both are optional; a project with no tracker and no designs authorises neither. |
@@ -118,11 +141,11 @@ The chain BRD → PRD → EARS → BDD → ADR → SPEC → TDD → IPLAN → Co
 
 ## What each skill expects from the repo
 
-Most skills need nothing beyond `AGENTS.md` and their own folder. The files under `docs/agents/` are configuration the template ships; everything else in the table below is created by the skill itself when first needed.
+Most skills need nothing beyond `AGENTS.md` and their own folder. The files under `docs/agents/` are configuration the harness ships; everything else in the table below is created by the skill itself when first needed.
 
 ### Shared setup: `docs/agents/`
 
-A tracker is optional, and it does not have to be Jira: a project can plan entirely in `docs/`, recording `Issue tracker: none`. `code-review`, `to-tickets` and `triage` are the skills that read the issue-tracker configuration, and each asks for one when it is reached for without it. When there is a tracker the template ships configured for **Jira through the Atlassian MCP server**:
+A tracker is optional, and it does not have to be Jira: a project can plan entirely in `docs/`, recording `Issue tracker: none`. `code-review`, `to-tickets` and `triage` are the skills that read the issue-tracker configuration, and each asks for one when it is reached for without it. When there is a tracker the harness ships configured for **Jira through the Atlassian MCP server**:
 
 - `docs/agents/issue-tracker.md`: which MCP tools create, read, label, link and close issues. **Replace `TODO-PROJECT-KEY` with your Jira project key** before first use.
 - `docs/agents/triage-labels.md`: maps the five triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) to plain Jira labels of the same names.

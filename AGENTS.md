@@ -1,6 +1,6 @@
-# Repo template
+# AI harness
 
-Language-agnostic repository template: layout, Git hooks, and an agent harness. There is no product code yet; whatever lands in `src/` defines the stack.
+An AI-agnostic agent harness in a language-agnostic repository: layout, Git hooks, skills and agents. There is no product code yet; whatever lands in `src/` defines the stack.
 
 ## Layout
 
@@ -8,7 +8,7 @@ Each folder's README says what belongs in it and how it is organised: `src/`, `t
 
 ## Project
 
-`MEMORY.md` at the root holds the facts no file derives: what the project is, where its requirements live, the stack, and the issue tracker if the project has one. Read it first. The `project-init` skill writes it; until it exists this is still an unconfigured template, and that skill is the first thing to run. The `pre-commit` and `pre-push` hooks refuse to let work leave a clone whose `MEMORY.md` is missing or still holds `<placeholders>`, unless an empty `.skip-project-init` at the root says this clone has no project to configure.
+`MEMORY.md` at the root holds the facts no file derives: what the project is, where its requirements live, the stack, and the issue tracker if the project has one. Read it first. The `project-init` skill writes it; until it exists this is still an unconfigured clone, and that skill is the first thing to run. The `pre-commit` and `pre-push` hooks refuse to let work leave a clone whose `MEMORY.md` is missing or still holds `<placeholders>`, unless an empty `.skip-project-init` at the root says this clone has no project to configure.
 
 ## Documentation
 
@@ -54,7 +54,7 @@ Skills are vendored: add or update them with `npx skills` instead of editing the
 
 ### Issue tracker
 
-Optional, and not tied to one product. `MEMORY.md` names the tracker, `docs/agents/issue-tracker.md` holds its conventions and the tools that reach it, and `to-tickets`, `triage` and `code-review` read that file rather than knowing any tracker themselves. The template ships it configured for Jira through the Atlassian MCP server; `setup-matt-pocock-skills` rewrites it for another. A project may also plan entirely in `docs/`, recording `Issue tracker: none`.
+Optional, and not tied to one product. `MEMORY.md` names the tracker, `docs/agents/issue-tracker.md` holds its conventions and the tools that reach it, and `to-tickets`, `triage` and `code-review` read that file rather than knowing any tracker themselves. The harness ships it configured for Jira through the Atlassian MCP server; `setup-matt-pocock-skills` rewrites it for another. A project may also plan entirely in `docs/`, recording `Issue tracker: none`.
 
 ### Triage labels
 
