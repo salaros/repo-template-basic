@@ -29,11 +29,12 @@ const isSource = token =>
     /^https?:\/\/\S+$/i.test(token)
     || /^jira:[A-Za-z][A-Za-z0-9]*-\d+$/.test(token)
     || (looksLikePath(token) && fs.existsSync(token));
-// "**Derived from:** x, y" -> ["x", "y"], with surrounding punctuation stripped.
-const referenceTokens = line => line.replace(/^\**Derived from:?\**:?/i, "")
-    .split(/[\s,;]+/).filter(Boolean)
+// "x, y (z)" -> ["x", "y", "z"], with surrounding punctuation stripped.
+const tokensOf = text => text.split(/[\s,;]+/).filter(Boolean)
     .map(t => t.replace(/^[("'<[]+|[)"'>\].]+$/g, ""))
     .filter(Boolean);
+// "**Derived from:** x, y" -> ["x", "y"].
+const referenceTokens = line => tokensOf(line.replace(/^\**Derived from:?\**:?/i, ""));
 
 // The chain itself, read from the AGENTS.md table: | Stage | Answers | Lives in | Skill |. Every
 // row in table order, so the caller sees the pipeline the way a reader of AGENTS.md does; `folder`
@@ -158,13 +159,19 @@ function check(root = "docs", agentsFile = "AGENTS.md", memoryFile = "MEMORY.md"
             // a broken citation sends the reader looking for a document that was never named.
             if (/^<[^>]*>$/.test(value)) { /* unconfigured, and gated elsewhere */ }
             else if (!/^none yet\b/i.test(value)) {
-                for (const entry of value.split(",").map(s => s.trim()).filter(Boolean)) {
-                    const token = entry.split(/\s+/)[0].replace(/^[("'<[]+|[)"'>\].]+$/g, "");
-                    if (new RegExp(`^(${prefixes.join("|") || "NONE"})-\\d{4}$`).test(token)) {
-                        if (!docs.has(token)) say(memoryFile, `Requirements names ${token}, which does not exist`);
-                    } else if (!isSource(token)) {
-                        say(memoryFile, `Requirements entry "${entry}" is not a document ID, a source (${SOURCE_HELP}), or "none yet"`);
-                    }
+                // The same rule as "Derived from:": at least one reference on the line, and the rest
+                // of the words are the writer's. Holding every comma-separated piece to it turned a
+                // sentence naming its source into four broken citations, and made English the only
+                // language the line could be written in.
+                const tokens = tokensOf(value);
+                const named = tokens.filter(t => new RegExp(`^(${prefixes.join("|") || "NONE"})-\\d{4}$`).test(t));
+                for (const token of named) {
+                    if (!docs.has(token)) say(memoryFile, `Requirements names ${token}, which does not exist`);
+                }
+                if (!named.length && !tokens.some(isSource)) {
+                    const broken = tokens.find(t => looksLikePath(t) && !fs.existsSync(t));
+                    say(memoryFile, `Requirements names no reference: cite a document ID, a source (${SOURCE_HELP}), or "none yet"`
+                        + (broken ? `; ${broken} does not exist` : ""));
                 }
             }
         }

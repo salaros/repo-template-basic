@@ -259,7 +259,11 @@ function docsCheckMemoryRequirements(t) {
         ["a document that exists", ["- **Requirements:** BRD-9300"], 0, ""],
         ["several sources", ["- **Requirements:** https://example.com/a, jira:ABC-1"], 0, ""],
         ["a document that does not exist", ["- **Requirements:** BRD-9999"], 1, "does not exist"],
-        ["prose instead of a reference", ["- **Requirements:** the whiteboard"], 1, "is not a document ID"],
+        ["prose instead of a reference", ["- **Requirements:** the whiteboard"], 1, "names no reference"],
+        // The rule is "Derived from:"'s: one reference on the line, and the rest of the words are the
+        // writer's, in whatever language MEMORY.md says this project writes prose in.
+        ["prose around a reference", ["- **Requirements:** gathered on a call, written up in BRD-9300"], 0, ""],
+        ["prose around a reference, not in English", ["- **Requirements:** требования собраны в BRD-9300"], 0, ""],
         ["no Requirements line", ["# Project", "", "- **Stack:** none yet"], 1, "no Requirements line"],
         // update-harness.js lays down a MEMORY.md of placeholders when it installs the harness into a
         // repo that has none, so a fresh install must pass its own checks. check-initialised.js
