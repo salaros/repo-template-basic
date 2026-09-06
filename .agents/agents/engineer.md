@@ -25,6 +25,8 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | an issue or external PR to classify | `triage` |
 | a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |
+| which layer code belongs in, how to keep business rules off the framework or the database, where a boundary goes | `clean-architecture`, when `docs/adr/` records it as this project's architecture. Where no ADR names one, that decision is written first with `domain-modeling`: it is the definition of one hard to reverse. Write the result in `codebase-design`'s vocabulary -- modules, interfaces, depth, seams, leverage -- whichever architecture is in force |
+| a feature to add to a .NET project laid out in feature folders, when `docs/adr/` records vertical slice as this project's architecture | `vertical-slice` for the folder layout and the handler patterns, whether the project uses Mediator, Wolverine or plain handler classes |
 | code that feels over-built | `ponytail-audit` scans the whole codebase and ranks what to delete, simplify or replace with a stdlib equivalent |
 | code that works but reads badly | `code-simplification`, which restructures for clarity without changing behaviour. Reach for it where `ponytail` would delete and there is nothing to delete |
 | a change to check before it merges | `code-review-and-quality` |
@@ -35,6 +37,8 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | React or Next.js code, when the frontend is React | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
 | Vue code, `.vue` files, Vue Router or Pinia, when the frontend is Vue | `vue-best-practices`, which holds to the Composition API with `<script setup>` and TypeScript unless the project is already on the Options API |
 | ASP.NET Core code, when `MEMORY.md` gives the stack as .NET: Blazor, Razor Pages, MVC, Minimal APIs, Web APIs, SignalR, gRPC, middleware, DI, configuration, auth, or a framework upgrade | `aspnet-core` |
+| Minimal API endpoints that need OpenAPI or Swagger documentation, when `MEMORY.md` gives the stack as .NET | `aspnet-minimal-api-openapi`, which goes deeper on documenting the endpoints than `aspnet-core` does on the framework around them |
+| Entity Framework Core, when `MEMORY.md` gives the stack as .NET: a `DbContext`, a model configuration, a migration, or a query to tune | `ef-core` |
 | structure being added or reshaped in C#, when `MEMORY.md` gives the stack as .NET: a new service, handler, provider, repository or abstraction | `dotnet-design-pattern-review`, pointed at the types you added. It reviews and suggests without editing. Its required patterns describe a CLI or host application (`CommandHandler<TOptions>`, `SetupCommand(IHost host)`, `.resx` resource managers), so weigh each against what this project actually is rather than adopting them because the checklist names them. A one-line fix changes no structure and needs none of this |
 | something to drive in a browser or Electron app | `agent-browser` |
 | a skill, `AGENTS.md`, or any other document an agent will read | `writing-for-agents` |

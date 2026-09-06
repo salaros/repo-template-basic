@@ -13,6 +13,12 @@
       "skillPath": "skills/.curated/aspnet-core/SKILL.md",
       "computedHash": "192537b889ef60aba67db5f3c1f694e460fde9b6a45fb4c35ecab8e7710bfa67"
     },
+    "aspnet-minimal-api-openapi": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/aspnet-minimal-api-openapi/SKILL.md",
+      "computedHash": "2c4b990eba7b246b17c043a60b85f0910a98ce5e8aad13b92e34c260fdf23d4b"
+    },
     "bdd-scenarios": {
       "source": "thebushidocollective/han",
       "sourceType": "github",
@@ -24,6 +30,12 @@
       "sourceType": "github",
       "skillPath": "ci-cd-best-practices/SKILL.md",
       "computedHash": "28b1f37ee1815aef97f1c728ed1f16f054a0c3ee7adef17f11ab464ad9f4f4ae"
+    },
+    "clean-architecture": {
+      "source": "wondelai/skills",
+      "sourceType": "github",
+      "skillPath": "clean-architecture/SKILL.md",
+      "computedHash": "41bc54cd69d52698ca747529a148d971e23587cc872db58f715b59de95ef51e6"
     },
     "code-review": {
       "source": "mattpocock/skills",
@@ -96,6 +108,12 @@
       "sourceType": "github",
       "skillPath": "skills/duck-debt/SKILL.md",
       "computedHash": "1d3eed0af1ee8007837be4c05b228da7f43b5ac2033f6a96068a58b529c2d82a"
+    },
+    "ef-core": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/ef-core/SKILL.md",
+      "computedHash": "23f0a7c7e8c050337d67303f0af339da1ab8f0aa6a334f13112c3f85250c329c"
     },
     "feature-forge": {
       "source": "jeffallan/claude-skills",
@@ -270,6 +288,12 @@
       "sourceType": "github",
       "skillPath": "skills/react-view-transitions/SKILL.md",
       "computedHash": "2033ef20681c90d4f93deee719e55e019c254e496d9bf80381c27cc539292001"
+    },
+    "vertical-slice": {
+      "source": "codewithmukesh/dotnet-claude-kit",
+      "sourceType": "github",
+      "skillPath": "skills/vertical-slice/SKILL.md",
+      "computedHash": "90b4ba579be9a2e193295ca4fffb3f77a019bd6dae6b2051027c6b3a344f0249"
     },
     "vue-best-practices": {
       "source": "vuejs-ai/skills",
