@@ -1,0 +1,26 @@
+# scripts/skill-licences.tsv: one row per upstream that a vendored skill came from. Read by scripts/skills.js notices, which regenerates THIRD-PARTY-NOTICES.md from it and from skills-lock.json.
+# MIT and Apache-2.0 both ask that the copyright and permission notice travel with copies of the work. Vendoring a skill makes a copy, and npx skills carries only what sits inside the skill folder, so a licence at the root of the upstream repo does not come with it. This file is where that notice lives instead.
+# Adding a skill from a new upstream adds a row here. The harness suite fails until it does, so the notice cannot fall behind the lock file.
+# Columns, tab-separated: source, as recorded in skills-lock.json, optionally `source#prefix` to cover only the skills of that source whose name starts with the prefix, which is how one repo shipping two sets of terms is split | spdx: the SPDX identifier, or a name for terms that have none | holder: the copyright line to reproduce, or - where the upstream states none | url: where the licence text lives | note: a restriction worth knowing before the skill ships in someone's product, or -
+mattpocock/skills	MIT	Copyright (c) 2026 Matt Pocock	https://github.com/mattpocock/skills/blob/main/LICENSE	-
+github/awesome-copilot	MIT	Copyright GitHub, Inc.	https://github.com/github/awesome-copilot/blob/main/LICENSE	-
+openai/skills	Apache-2.0	-	https://github.com/openai/skills	Per-skill: each folder carries its own LICENSE.txt, already vendored. The figma* skills are not Apache-2.0 -- see the figma row.
+openai/skills#figma	Figma Developer Terms	-	https://www.figma.com/legal/developer-terms/	Not an open-source licence, and a Beta that Figma may modify, suspend or discontinue at any time. Covers figma, figma-use, figma-generate-design, figma-implement-design.
+dietrichgebert/ponytail	MIT	Copyright (c) 2026 DietrichGebert	https://github.com/dietrichgebert/ponytail/blob/main/LICENSE	-
+addyosmani/agent-skills	MIT	Copyright (c) 2025 Addy Osmani	https://github.com/addyosmani/agent-skills/blob/main/LICENSE	-
+alirezarezvani/claude-skills	MIT	Copyright (c) 2025 Alireza Rezvani	https://github.com/alirezarezvani/claude-skills/blob/main/LICENSE	-
+jeffallan/claude-skills	MIT	Copyright (c) 2025	https://github.com/jeffallan/claude-skills/blob/main/LICENSE	-
+vercel-labs/agent-skills	MIT	-	https://github.com/vercel-labs/agent-skills#license	Stated in the README only: no LICENSE file and no copyright holder to reproduce.
+vercel-labs/agent-browser	Apache-2.0	-	https://github.com/vercel-labs/agent-browser/blob/main/LICENSE	-
+thebushidocollective/han	FSL-1.1-ALv2	Copyright 2025 The Bushido Collective	https://github.com/thebushidocollective/han/blob/main/LICENSE	Source-available, not open source. Forbids Competing Use, and converts to Apache-2.0 two years after each release.
+mindrally/skills	Apache-2.0	-	https://github.com/mindrally/skills/blob/main/LICENSE	-
+wondelai/skills	MIT	Copyright (c) 2025 Wondel.ai sp. z o.o.	https://github.com/wondelai/skills/blob/main/LICENSE	-
+diskd-ai/design-doc	MIT	-	https://github.com/diskd-ai/design-doc#license	Stated in the README only: no LICENSE file and no copyright holder to reproduce.
+sprngr/rubber-duck	MIT	Copyright (c) 2026 Michael Springer	https://github.com/sprngr/rubber-duck/blob/main/LICENSE	-
+vercel-labs/skills	MIT	Copyright (c) 2026 Vercel, Inc.	https://github.com/vercel-labs/skills/blob/main/LICENSE	-
+anthropics/skills	Apache-2.0	-	https://github.com/anthropics/skills	Per-skill: each folder carries its own LICENSE.txt, already vendored.
+refoundai/lenny-skills	MIT	Copyright (c) 2025 Refound AI	https://github.com/refoundai/lenny-skills/blob/main/LICENSE	-
+wshobson/agents	MIT	Copyright (c) 2024 Seth Hobson	https://github.com/wshobson/agents/blob/main/LICENSE	-
+codewithmukesh/dotnet-claude-kit	MIT	Copyright (c) 2025 Mukesh Murugan	https://github.com/codewithmukesh/dotnet-claude-kit/blob/main/LICENSE	-
+vuejs-ai/skills	MIT	Copyright (c) 2025 hyf0, SerKo <https://github.com/serkodev>	https://github.com/vuejs-ai/skills/blob/main/LICENSE	-
+softaworks/agent-toolkit	MIT	Copyright (c) 2026 Leonardo Flores	https://github.com/softaworks/agent-toolkit/blob/main/LICENSE	-

@@ -45,6 +45,19 @@ function everyInstalledSkillIsLinked(t) {
         unlinked.slice(0, 10).join(", "));
 }
 
+// Vendoring a skill copies someone else's work into this repo, and MIT and Apache-2.0 both ask that
+// the copyright and permission notice travel with the copy. `npx skills` carries only what sits
+// inside the skill folder, so an upstream keeping its licence at the repo root sends nothing, and
+// the notice has to be written here. Nothing about adding a skill prompts anyone to do that, which
+// is what this check is for: THIRD-PARTY-NOTICES.md is generated, so a new upstream with no row in
+// scripts/skill-licences.tsv fails the suite rather than shipping unattributed.
+function vendoredSkillsAreAttributed(t) {
+    const r = lib.node(["scripts/skills.js", "notices", "--check"]);
+    t.ok(r.status === 0,
+        "THIRD-PARTY-NOTICES.md covers every vendored skill (node scripts/skills.js notices)",
+        r.output);
+}
+
 // .agents/routing.md holds the rows more than one agent routes through, in a section per audience:
 // each section names its agents, each agent names its sections, and the two must agree. Either half
 // is a silent failure otherwise. A section nobody names is dead rows; an agent naming a section that
@@ -300,6 +313,7 @@ module.exports = [
     everyInstalledSkillIsLinked,
     agentRoutingSectionsAgreeOnTheirAudience,
     noSkillIsMissingFromDisk,
+    vendoredSkillsAreAttributed,
     docsCheckCitationEdgeCases,
     docsCheckDerivedFromShapes,
     docsCheckSourceAndAdrExemption,
