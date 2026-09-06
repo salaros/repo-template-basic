@@ -22,6 +22,8 @@
 //   node scripts/update-harness.js --from ../ai-harness use a checkout you already have, no clone
 //   node scripts/update-harness.js --astro-docs        add tools/docs-site, the Astro renderer for the chain
 //   node scripts/update-harness.js --no-check          install without proving it afterwards
+//   node scripts/update-harness.js --quiet             the summary alone, no line per path
+//   node scripts/update-harness.js --adopt             replace a harness that predates harness-lock.json
 // Installing into a repo that has no harness yet, from anywhere:
 //   git clone https://github.com/salaros/ai-harness .harness && \
 //     node .harness/scripts/update-harness.js --from .harness --target . && rm -rf .harness
@@ -39,6 +41,7 @@ const argv = process.argv.slice(2);
 const flag = name => argv.includes(name);
 const value = (name, fallback) => { const i = argv.indexOf(name); return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback; };
 const dryRun = flag("--dry-run");
+const adopt = flag("--adopt");
 
 // ---------------------------------------------------------------- the target
 
@@ -78,6 +81,19 @@ function templateCheckout(ref) {
         fail(`${TEMPLATE} at ${ref} carries no ${MANIFEST}, so there is nothing to install from; try another --ref`);
     }
     return { dir, temporary: true };
+}
+
+// The installer's own name and version, read from the package it ships inside rather than written
+// down here, so a release cannot forget to update it. It answers what the upstream commit cannot:
+// which released tool wrote this tree. Both routes land on the right file, because the script always
+// sits in the scripts/ folder of either the npm package or a checkout of the upstream. Omitted
+// rather than recorded as null when it cannot be read, so the receipt never claims a version it
+// does not know.
+function installer() {
+    try {
+        const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "package.json"), "utf8"));
+        return pkg.name && pkg.version ? { installer: `${pkg.name}@${pkg.version}` } : {};
+    } catch { return {}; }
 }
 
 const at = (dir, args) => lib.run("git", ["-C", dir, ...args]);
@@ -142,9 +158,12 @@ function link(target, file, to) {
     let existing = null;
     try { existing = fs.lstatSync(full); } catch { /* absent */ }
     if (existing) {
-        if (!existing.isSymbolicLink()) return "kept";       // something of the project's is in the way
-        if (fs.readlinkSync(full).split(path.sep).join("/") === to) return null;
-        fs.unlinkSync(full);
+        // Something of the project's is in the way -- or, in a repo whose harness predates the lock
+        // file, the link itself checked out as a text file holding a path, which is the failure that
+        // leaves an agent seeing no skills at all. --adopt is the only thing that replaces it.
+        if (!existing.isSymbolicLink()) { if (!adopt) return "kept"; fs.unlinkSync(full); }
+        else if (fs.readlinkSync(full).split(path.sep).join("/") === to) return null;
+        else fs.unlinkSync(full);
     }
     try {
         fs.symlinkSync(to.split("/").join(path.sep), full, "dir");
@@ -199,9 +218,9 @@ const SKELETONS = {
 
 function skeletons(target) {
     for (const [file, lines] of Object.entries(SKELETONS)) {
-        if (fs.existsSync(path.join(target, file))) continue;
+        if (fs.existsSync(path.join(target, file))) { step("seed", "100644", "yours", file); continue; }
         write(target, file, lines.join("\n"));
-        notes.seeded.push(file);
+        step("seed", "100644", "created", file, "seeded");
     }
 }
 
@@ -227,6 +246,19 @@ function threeWay(base, ours, theirs) {
 const notes = { written: [], merged: [], conflicted: [], seeded: [], kept: [], skipped: [], template: [], check: null };
 const say = m => console.log(m);
 function fail(m) { console.error(`update-harness: ${m}`); process.exit(1); }
+
+// An install rewrites someone else's repository, so it says what it did to every path while it does
+// it, and --quiet asks for the summary alone. The mode is worth a column of its own: a hook that
+// lands 100644 gates nothing and a skill link written as a regular file leaves the agent with no
+// skills, and both look installed. One call records the outcome and prints the line, so the running
+// commentary and the summary below cannot drift apart.
+const quiet = flag("--quiet");
+const mode = f => f.link ? "120000" : f.exec ? "100755" : "100644";
+function step(policy, m, outcome, file, bucket) {
+    if (bucket) notes[bucket].push(file);
+    if (!quiet) say(`  ${policy.padEnd(9)}${m}  ${outcome.padEnd(12)}${file}`);
+}
+const phase = m => { if (!quiet) say(`\n${m}`); };
 
 function write(target, file, text, exec) {
     const full = path.join(target, file);
@@ -263,6 +295,7 @@ function selfCheck(target, templateDir, head, files) {
         write(target, file, text);
         borrowed.push(file);
     }
+    phase(`self check: ${borrowed.length} file(s) borrowed from the upstream suite`);
     if (!borrowed.length) return { skipped: "the suite is already in this repo; run it yourself with node .agents/hooks/test.js" };
 
     try {
@@ -300,17 +333,34 @@ function main() {
         }
         if (previous && base === head) { say(`harness is already at ${head.slice(0, 8)} (${ref}); nothing to update`); return; }
 
+        // A repo carrying a harness from before harness-lock.json existed. Without a base the rule
+        // below keeps every file that is already there, which protects the project's work and also
+        // preserves the old harness: its checks then run against the new skills and agents and fail,
+        // naming rules this version dropped. Worth saying out loud, because the run otherwise looks
+        // like a success.
+        const MARKERS = [".agents/hooks/lib.js", "scripts/lib.js", ".githooks/pre-commit"];
+        const stale = !previous && MARKERS.filter(f => fs.existsSync(path.join(target, f)));
+        if (stale && stale.length) {
+            if (adopt) say(`this repo has a harness but no ${LOCK}, and --adopt was given: harness files are replaced with ${ref}'s, and edits to them are lost`);
+            else say(`this repo has a harness (${stale.join(", ")}) but no ${LOCK}, so it predates the receipt and there is no merge base.\nEvery harness file already here is kept, which leaves old checks running against new skills. Re-run with --adopt to replace them, or --dry-run --quiet to list them first.`);
+        }
+
         const rows = policies(templateDir);
         const files = templateFiles(templateDir);
         const skills = [];
 
-        for (const { file, link: isLink, exec } of files) {
+        phase(`${files.length} path(s) in ${ref} at ${head.slice(0, 8)}`);
+        for (const entry of files) {
+            const { file, link: isLink, exec } = entry;
             const policy = policyFor(rows, file);
+            const m = mode(entry);
             const theirs = blob(templateDir, head, file);
             if (theirs === null) continue;
             const full = path.join(target, file);
             const exists = fs.existsSync(full);
 
+            // Not installed anywhere, and named in one line of the summary instead: sixty-five
+            // lines saying nothing happened bury the thirty-eight saying something did.
             if (policy === "template") { notes.template.push(file); continue; }
             if (isLink) {
                 // A skill link is relink's to make, once the directory it lives in exists: it knows
@@ -320,40 +370,51 @@ function main() {
                     continue;
                 }
                 const how = link(target, file, theirs.trim());
-                if (how) notes[how].push(file);
+                step(policy, m, how === "kept" ? "yours" : how || "unchanged", file, how);
                 continue;
             }
+            // Reported one line per skill by mergeSkills below, not one per reference file: a skill
+            // is the unit a project installs, and its files run to several hundred.
             if (policy === "skills") { skills.push(file); continue; }
             // Reported only when the target actually has it: "left alone, yours" about a file the
             // repo does not have names something that was never there.
-            if (policy === "skip") { if (exists) notes.skipped.push(file); continue; }
+            if (policy === "skip") { step(policy, m, exists ? "yours" : "absent", file, exists && "skipped"); continue; }
 
             if (policy === "seed") {
-                if (exists) { notes.kept.push(file); continue; }
+                if (exists) { step(policy, m, "yours", file, "kept"); continue; }
                 write(target, file, theirs, exec);
-                notes.seeded.push(file);
+                step(policy, m, "created", file, "seeded");
                 continue;
             }
             // merge
-            if (!exists) { write(target, file, theirs, exec); notes.written.push(file); continue; }
+            if (!exists) { write(target, file, theirs, exec); step(policy, m, "written", file, "written"); continue; }
             const ours = fs.readFileSync(full, "utf8");
-            if (ours === theirs) continue;                       // already current
-            if (base === null) { notes.kept.push(file); continue; }
+            if (ours === theirs) { step(policy, m, "unchanged", file); continue; }
+            if (base === null) {
+                if (!adopt) { step(policy, m, "yours, no base", file, "kept"); continue; }
+                write(target, file, theirs, exec);
+                step(policy, m, "adopted", file, "written");
+                continue;
+            }
             const from = blob(templateDir, base, file);
-            if (from === null) { notes.kept.push(file); continue; }   // new to the upstream, and the target has its own
-            if (ours === from) { write(target, file, theirs, exec); notes.written.push(file); continue; }
+            if (from === null) { step(policy, m, "yours, new here", file, "kept"); continue; }
+            if (ours === from) { write(target, file, theirs, exec); step(policy, m, "written", file, "written"); continue; }
             const merged = threeWay(from, ours, theirs);
-            if (merged.failed) { notes.kept.push(file); continue; }
+            if (merged.failed) { step(policy, m, "yours, merge failed", file, "kept"); continue; }
             write(target, file, merged.text, exec);
-            (merged.conflicts ? notes.conflicted : notes.merged).push(file);
+            if (merged.conflicts) step(policy, m, "CONFLICT", file, "conflicted");
+            else step(policy, m, "merged", file, "merged");
         }
 
+        phase("skeletons a project starts with");
         skeletons(target);
+        phase("skills, merged by name");
         mergeSkills(target, templateDir, head, skills);
 
         if (!dryRun) {
             fs.writeFileSync(lockPath, JSON.stringify({
-                template: TEMPLATE, ref, commit: head, updated: new Date().toISOString().slice(0, 10),
+                template: TEMPLATE, ref, commit: head, ...installer(),
+                updated: new Date().toISOString().slice(0, 10),
             }, null, 2) + "\n");
             finish(target);
             // After finish(), because the suite checks the links relink has just written.
@@ -376,18 +437,29 @@ function mergeSkills(target, templateDir, head, files) {
     ourLock.skills = ourLock.skills || {};
 
     const mine = new Set(Object.keys(ourLock.skills));
+    // One line per skill, not per file. Outcome is decided across the whole folder: a skill counts
+    // as changed the moment any file in it did, and only an untouched folder reads "unchanged".
+    const outcomes = new Map();
+    const seen = name => outcomes.get(name) || outcomes.set(name, { added: 0, updated: 0, files: 0 }).get(name);
     for (const file of files) {
         if (!file.startsWith(SKILLS)) continue;                 // .claude/skills links are rebuilt, not copied
         const name = file.slice(SKILLS.length).split("/")[0];
+        const tally = seen(name);
+        tally.files++;
         // A skill the project installed under a name the upstream also uses stays the project's.
-        if (mine.has(name) && !theirLock.skills[name]) continue;
+        if (mine.has(name) && !theirLock.skills[name]) { tally.yours = true; continue; }
         const text = blob(templateDir, head, file);
         if (text === null) continue;
         const full = path.join(target, file);
         const exists = fs.existsSync(full);
         if (exists && fs.readFileSync(full, "utf8") === text) continue;
         write(target, file, text);
-        (exists ? notes.merged : notes.written).push(file);
+        if (exists) { tally.updated++; notes.merged.push(file); }
+        else { tally.added++; notes.written.push(file); }
+    }
+    for (const [name, t] of [...outcomes].sort()) {
+        const what = t.yours ? "yours" : t.added ? "added" : t.updated ? "updated" : "unchanged";
+        step("skills", "100644", what, `${SKILLS}${name}  (${t.files} file(s))`);
     }
     for (const [name, entry] of Object.entries(theirLock.skills)) {
         if (!ourLock.skills[name]) ourLock.skills[name] = entry;
@@ -400,6 +472,7 @@ function mergeSkills(target, templateDir, head, files) {
 // project's lock file. Both are generated, so the install leaves a harness that works rather than a
 // list of commands to remember.
 function finish(target) {
+    phase("links and notices");
     for (const [label, args] of [["links", ["relink"]], ["notices", ["notices"]]]) {
         const r = lib.node([path.join(target, "scripts/skills.js"), ...args], { cwd: target });
         say(r.status === 0 ? r.output : `${label}: ${r.output}`);
@@ -407,7 +480,14 @@ function finish(target) {
 }
 
 function report(target, head, ref, base) {
-    const list = (label, arr) => { if (arr.length) say(`\n${label} (${arr.length}):\n  ${arr.sort().join("\n  ")}`); };
+    // Every path was named as it happened, so repeating the lists here doubles the output; a quiet
+    // run never saw them and gets them in full. Conflicts are listed either way: they are what the
+    // reader has to act on, and they belong beside the instructions for acting on them.
+    const list = (label, arr, always) => {
+        if (!arr.length) return;
+        if (quiet || always) say(`\n${label} (${arr.length}):\n  ${arr.sort().join("\n  ")}`);
+        else say(`\n${label}: ${arr.length}`);
+    };
     say("");
     say(dryRun ? `dry run against ${ref} at ${head.slice(0, 8)}` : `harness updated to ${ref} at ${head.slice(0, 8)}`);
     if (!base) say("no merge base: this was an install, so nothing that already existed was changed");
@@ -422,7 +502,7 @@ function report(target, head, ref, base) {
         say(`\nnot installed, the upstream's own (${notes.template.length}): ${named.join(", ")}, and the suite's fixtures`);
     }
     if (notes.conflicted.length) {
-        list("CONFLICTED, resolve the markers by hand", notes.conflicted);
+        list("CONFLICTED, resolve the markers by hand", notes.conflicted, true);
         say(`\nEach one holds <<<<<<< yours / ======= / >>>>>>> upstream (new). Resolve them, then run the suite:\n  node .agents/hooks/test.js`);
     }
     const check = notes.check;
