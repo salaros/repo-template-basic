@@ -28,7 +28,8 @@ Infrastructure is where speculative flexibility is most expensive: a Helm chart,
 | a production incident | `devops-rollout-plan` for the rollback path first, then `devops-engineer` for the runbook; `triage` to classify what comes out of it |
 | a hosting, topology or data-store decision that is hard to reverse | `domain-modeling` writes the ADR, then `docs-check`. Write it the moment the decision is forced: an ADR is cross-cutting and may cite whatever forced it |
 | an infrastructure design that needs writing down before it is built | `design-doc`, then `create-implementation-plan`, then `docs-check` |
-| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `deferred:` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
+| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `#deferred` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
+| the issue tracker to automate or report on: a release or incident dashboard, an automation rule, the saved search behind either | the expert skill for whichever tracker `MEMORY.md` names, `jira-expert` for Jira. `docs/agents/issue-tracker.md` is this repo's tool list |
 | infrastructure or config that feels over-built | `ponytail-audit` scans the whole repo and ranks what to delete, simplify or replace with a native equivalent |
 | a pipeline or manifest that works but reads badly | `code-simplification`, which restructures for clarity without changing behaviour. Reach for it where `ponytail` would delete and there is nothing to delete |
 | a change to check before it merges | `code-review-and-quality` |

@@ -23,7 +23,7 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | --- | --- |
 | a plan, decision or idea that is not yet sharp | `grilling`; add `domain-modeling` the moment a term or decision lands |
 | a state model or UI question cheaper to build than to argue | `prototype` |
-| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `deferred:` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
+| a settled plan that needs breaking into work | `to-tickets`, when the project has an issue tracker: hand it the open `#deferred` entries from `TODO.md` as well, and delete each one whose ticket now exists. With none, its drafts under `.scratch/<feature-slug>/issues/` are the work items |
 | an issue or external PR to classify | `triage` |
 | a document of the chain in `AGENTS.md` to write: ADR, SPEC, IPLAN | `domain-modeling` for an ADR, `design-doc`, `create-implementation-plan`, then `docs-check`; earlier stages belong to the `business-analyst` agent. An ADR is cross-cutting, so write one the moment a decision is forced, whatever stage you are at, and derive it from whatever forced it |
 | code being designed or restructured | `codebase-design` for the vocabulary; `improve-codebase-architecture` for a whole-codebase scan |

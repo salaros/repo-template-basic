@@ -1,8 +1,9 @@
-# Loose ends
+# TODO
 
 What has nowhere else to live. The loose-ends skill has the format.
 
-- [ ] question: does the initialisation gate belong on push as well (AGENTS.md)
-- [ ] assumption: every clone has run githooks-init (scripts/githooks-init.js:1)
-- [ ] deferred: no test covers the relink path (jira:AB-42)
-- [ ] deferred: revisit once the spec settles (https://example.com/spec)
+- [ ] Does the initialisation gate belong on push as well? #question (AGENTS.md)
+- [ ] Every clone has run githooks-init #assumption @yaroslav (scripts/githooks-init.js:1)
+- [ ] No test covers the relink path #deferred (jira:AB-42)
+  - [ ] and the absolute-link case under it is untested too
+- [ ] Revisit once the spec settles #deferred (https://example.com/spec)

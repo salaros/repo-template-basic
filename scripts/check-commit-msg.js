@@ -25,24 +25,34 @@ const TRAILER = /^(?:BREAKING[ -]CHANGE:|[A-Za-z][A-Za-z-]*:\s)/;
 // Git writes these itself, so holding them to the rule would block a merge or a rebase.
 const GENERATED = /^(?:Merge |Revert "|fixup! |squash! |amend! )/;
 
-// Whether the project has decided it has no issue tracker. `project-init` writes `Jira: none` into
-// MEMORY.md for a project that plans in docs/, and nagging that repo for a key on every commit
-// would be asking for something it has already said it does not have.
+// Whether the project has decided it has no issue tracker. `project-init` writes
+// `Issue tracker: none` into MEMORY.md for a project that plans in docs/, and nagging that repo for
+// a key on every commit would be asking for something it has already said it does not have.
 function noTracker() {
     try {
-        const m = fs.readFileSync("MEMORY.md", "utf8").match(/^\s*-\s*\*\*Jira:\*\*\s*(.*)$/mi);
+        const m = fs.readFileSync("MEMORY.md", "utf8").match(/^\s*-\s*\*\*Issue tracker:\*\*\s*(.*)$/mi);
         return !!m && /^none\b/i.test(m[1].trim());
     } catch { return false; }
 }
 
-// The Jira key this project uses, from the file the skills already read, or null while the template
-// is unconfigured. A commit with no issue key is warned about, never blocked: the point is to
-// encourage the habit, and a change can be legitimate before anyone has raised a ticket for it.
-function projectKey() {
-    try {
-        const m = fs.readFileSync("docs/agents/issue-tracker.md", "utf8").match(/^\*\*Project key:\*\*\s*`([^`]+)`/m);
-        return m && m[1] !== "TODO-PROJECT-KEY" ? m[1] : null;
-    } catch { return null; }
+// What an issue reference looks like here, from the file the skills already read. Trackers differ:
+// Jira and Linear cite `AB-42`, GitHub Issues `#42`, Asana a bare number. A project on anything but
+// the first sets `Key format:` to a regular expression and gets warned about the right thing; with
+// no format set the project key scopes the check, and with no key either, anything Jira-shaped
+// counts. A commit with no reference is warned about, never blocked: the point is to encourage the
+// habit, and a change can be legitimate before anyone has raised a ticket for it.
+function reference() {
+    let cfg = "";
+    try { cfg = fs.readFileSync("docs/agents/issue-tracker.md", "utf8"); } catch { /* unconfigured */ }
+    const format = cfg.match(/^\*\*Key format:\*\*\s*`([^`]+)`/m);
+    // A hand-written regular expression: unusable ones fall through to the key rather than throwing.
+    // A configured format has no sample to show, so the advice names the shape instead of an example.
+    if (format) { try { return { re: new RegExp(format[1]), format: format[1] }; } catch { /* fall through */ } }
+    const k = cfg.match(/^\*\*Project key:\*\*\s*`([^`]+)`/m);
+    const key = k && k[1] !== "TODO-PROJECT-KEY" ? k[1] : null;
+    return key
+        ? { re: new RegExp(`\\b${key}-\\d+\\b`), example: `${key}-123` }
+        : { re: /\b[A-Z][A-Z0-9]+-\d+\b/, example: "PROJ-123" };
 }
 
 // Read the message before changing directory: the path given may be relative to where Git ran.
@@ -97,12 +107,13 @@ if (prose.length < MIN_BODY) {
 // The key counts only where it means "this commit is that work": the subject, or a trailer. A key
 // named in passing in the body is prose about a ticket, not a reference to one, and a message that
 // merely quotes an example would otherwise read as compliant.
-const key = projectKey();
-const issue = key ? new RegExp(`\\b${key}-\\d+\\b`) : /\b[A-Z][A-Z0-9]+-\d+\b/;
+const { re: issue, example, format } = reference();
 if (!noTracker() && !issue.test(header) && !trailers.some(t => issue.test(t))) {
-    const example = `${key || "PROJ"}-123`;
-    console.error(`commit message: no issue key (${example}). Add one so the change can be traced to its ticket, ` +
-        `in the subject or as a trailing "Refs: ${example}" line.`);
+    console.error(example
+        ? `commit message: no issue key (${example}). Add one so the change can be traced to its ticket, ` +
+          `in the subject or as a trailing "Refs: ${example}" line.`
+        : `commit message: no issue reference matching ${format}. Add one so the change can be traced to its ` +
+          `ticket, in the subject or as a trailing "Refs:" line.`);
 }
 
 if (!problems.length) { console.log(`commit message: conventional, ${header.length} character subject`); process.exit(0); }

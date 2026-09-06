@@ -19,7 +19,7 @@ const MARKER = ".skip-project-init";
 const FACTS = "MEMORY.md";
 // What a project must know about itself. An empty file, or one still carrying the template's
 // <angle-bracket> placeholders, is not an initialised project: it is the skill half-run.
-// `Jira` is deliberately absent. An issue tracker is a choice, not a property of the code, and a
+// `Issue tracker` is deliberately absent. A tracker is a choice, not a property of the code, and a
 // repo with no tracker at all is a real repo; `to-tickets` is the only skill that needs one, and it
 // can say so itself. The same goes for Figma: nothing here requires it. `Frontend` is absent for the
 // same reason: a service or a library has no UI, so it has no framework to name.

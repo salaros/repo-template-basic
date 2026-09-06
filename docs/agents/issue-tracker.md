@@ -5,6 +5,7 @@ A tracker is optional. When `MEMORY.md` records `Jira: none` this file does not 
 Issues and specs for this repo live in Jira. Agents reach Jira through the **Atlassian Rovo MCP server** (`https://mcp.atlassian.com/v2/mcp`), registered in `.mcp.json` (Claude Code, Cursor) and `opencode.json` (OpenCode) at the repo root; the server must be authorised once per tool (OAuth in the tool's MCP settings). Tool names below are the v2 names. If the project uses Jira and no Jira tools are available in your session, tell the user to authorise the Atlassian connector rather than falling back to another tracker.
 
 **Project key:** `TODO-PROJECT-KEY` _(replace with the Jira project key, e.g. `CC`; every operation below is scoped to it)._
+**Key format:** _(optional. Set it to a regular expression in backticks when this tracker's references are not `KEY-123`: `` `#\d+` `` for GitHub Issues, `` `\d{10,}` `` for Asana. The `commit-msg` hook uses it to decide whether a message cites an issue; left unset, the project key above scopes the check.)_
 
 ## Conventions
 

@@ -39,9 +39,12 @@ scripts/check-commit-msg.js	msg-no-body.txt	1	-	there is no description	a subjec
 scripts/check-commit-msg.js	msg-trailer-only-body.txt	1	-	there is no description	a body that is only a trailer does not count as a description
 scripts/check-commit-msg.js	msg-key-in-prose.txt	0	-	no issue key	a key quoted in the body is prose, not a reference, so the warning stands
 scripts/check-commit-msg.js	msg-key-in-trailer.txt	0	-	conventional	a key in a trailer line counts, so no warning
-scripts/check-todo.js	todo-valid.txt	0	-	all well formed	every tag, and each kind of source, passes
-scripts/check-todo.js	todo-bad-tag.txt	1	-	not an entry	an entry with an unknown tag is rejected
-scripts/check-todo.js	todo-ticked.txt	1	-	a ticked entry	a resolved entry is deleted, not ticked
+scripts/check-todo.js	todo-valid.txt	0	-	all well formed	every tag, a subtask, an assignee and each kind of source all pass
+scripts/check-todo.js	todo-no-header.txt	1	-	must open with "# TODO"	todo-md requires the header, so a file of bare entries is rejected
+scripts/check-todo.js	todo-bad-tag.txt	1	-	unknown tag	a tag outside the three kinds is rejected
+scripts/check-todo.js	todo-ticked.txt	1	-	a "[x]" entry	a resolved entry is deleted, not ticked
+scripts/check-todo.js	todo-declined.txt	1	-	a "[-]" entry	a declined entry is deleted too, though todo-md would keep it
+scripts/check-todo.js	todo-no-source.txt	1	-	no source	an entry that says nothing about where it came from is rejected
 scripts/check-todo.js	todo-bad-source.txt	1	-	is not a source	prose in place of a source is rejected
-scripts/check-todo.js	todo-prose.txt	0	-	0 open item(s)	a file of prose with no entries passes
+scripts/check-todo.js	todo-prose.txt	0	-	0 open item(s)	a file with the header and no entries passes
 scripts/check-todo.js	todo-empty.txt	0	-	nothing to check	an empty ledger is not a problem

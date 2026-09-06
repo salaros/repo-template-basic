@@ -23,8 +23,8 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | Which language? | Language | One language (`C#`, `TypeScript`, `Python`) |
    | Which runtime and package manager? | Runtime / package manager | Version included (`.NET 9 / NuGet`, `Node 22 / pnpm`, `Python 3.13 / uv`) |
    | Which frontend framework? | Frontend | Only when the project has browser code: `React`, `Vue`, `Blazor`, or `none`. The `engineer` agent routes its framework skills on this, so a guess here sends it to the wrong ones |
-   | Is there an issue tracker? | Jira site | `https://<org>.atlassian.net`, or `none`. A project can plan entirely in `docs/`, and many do before a tracker exists; take `none` at face value and skip the next question |
-   | Which Jira project key? | Jira key | Only when a site was given. Upper case, as Jira shows it (`AB`); with the Atlassian MCP authorised, offer the keys `listJiraProjects` returns as options |
+   | Which issue tracker? | Issue tracker | `Jira`, `Linear`, `Asana`, `GitHub Issues`, or `none`. A project can plan entirely in `docs/`, and many do before a tracker exists; take `none` at face value and skip the next question. Jira is what the template ships configured for, so any other answer means step 5 rewrites `docs/agents/issue-tracker.md` for that tracker |
+   | Where does it live, and under which key? | Issue tracker | Only when a tracker was named: its URL, and the key or project identifier as that tracker shows it (`https://<org>.atlassian.net` and `AB` for Jira). With the Atlassian MCP authorised, offer the keys `listJiraProjects` returns as options |
 
    Done when every fact is a specific string that passes its "accept only" column.
 
@@ -42,10 +42,10 @@ The template knows nothing about the project it hosts. This skill asks the devel
    - **Language:** <language>
    - **Runtime / package manager:** <runtime>
    - **Frontend:** <framework>
-   - **Jira:** <jira site>, project `<KEY>` (conventions in `docs/agents/issue-tracker.md`)
+   - **Issue tracker:** <tracker> at <url>, project `<KEY>` (conventions in `docs/agents/issue-tracker.md`)
    ```
 
-   Done when the file holds exactly these eight facts. A project with no browser code records `- **Frontend:** none`, and one with no tracker `- **Jira:** none`, its work items living in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six: a tracker is a choice rather than a property of the project, and a service or a library has no UI to have a framework for.
+   Done when the file holds exactly these eight facts. A project with no browser code records `- **Frontend:** none`, and one with no tracker `- **Issue tracker:** none`, its work items living in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six: a tracker is a choice rather than a property of the project, and a service or a library has no UI to have a framework for.
 
 4. **Write the `Project` section of `README.md`.** Insert it before the first `## ` heading, between the two marker comments below; on an update, replace everything between the markers. Leave the rest of the README alone.
 
@@ -61,7 +61,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | Unit type | <unit type> |
    | Stack | <language>, <runtime> |
    | Frontend | <framework>, or `none` |
-   | Issue tracker | Jira project `<KEY>` at <jira site> (conventions in `docs/agents/issue-tracker.md`); with no tracker, `none: work items live in docs/` |
+   | Issue tracker | <tracker> project `<KEY>` at <url> (conventions in `docs/agents/issue-tracker.md`); with no tracker, `none: work items live in docs/` |
 
    The same facts are in `MEMORY.md`, which agents read first. Re-run the `project-init` skill to change them.
    <!-- project-init:end -->
@@ -69,7 +69,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
    Done when the README has one marker pair and the table matches `MEMORY.md`.
 
-5. **Update `docs/agents/issue-tracker.md`**, only when a Jira site was given. With `none`, skip this step: leave the file as it is, and say in the report that the project has no tracker and its work items live in `docs/`. `to-tickets` is the one skill that needs a tracker, and it can ask for one when someone reaches for it.
+5. **Update `docs/agents/issue-tracker.md`**, only when a tracker was named. With `none`, skip this step: leave the file as it is, and say in the report that the project has no tracker and its work items live in `docs/`. `to-tickets` is the one skill that needs a tracker, and it can ask for one when someone reaches for it.
 
    Otherwise, replace every occurrence of the current key (`TODO-PROJECT-KEY` on a first run, the previous key on an update) with `<KEY>`, including the JQL examples and the bare-reference rule. Make the key line read exactly `**Project key:** \`<KEY>\`` with the placeholder note removed, and put `**Site:** <jira site>` on the line under it (replace the existing `Site` line on an update). Done when the file mentions no other key and both lines are present.
 
@@ -107,7 +107,7 @@ The seven facts recorded, which files changed, the scaffold commands handed over
 
 - Ask one question per turn: a single message with eight questions gets eight half-answers.
 - `Requirements` is checked by `node scripts/docs-check.js`, so a Confluence page goes in as its URL and an epic as `jira:AB-42`, not as prose. List several by separating them with commas. Once a BRD exists the line names the BRD instead, and the `brd` skill makes that swap.
-- A tracker is optional. `none` is a complete answer, and a project that plans in `docs/` needs nothing else; do not talk anyone into a Jira project they do not have. Figma is the same: the `figma` skills matter only once designs exist.
+- A tracker is optional. `none` is a complete answer, and a project that plans in `docs/` needs nothing else; do not talk anyone into a tracker they do not have. The template ships that file configured for Jira; for Linear, Asana or GitHub Issues, rewrite it for that tracker's own tools and set `Key format:` so the `commit-msg` hook warns about the right shape. Figma is the same: the `figma` skills matter only once designs exist.
 - When there is a key, it is upper case and the site a full URL; a lower-case key or a bare host name silently breaks the JQL in `issue-tracker.md`.
 - On an update, the old key must go everywhere in `issue-tracker.md`, including inside JQL strings and the `<KEY>-42` example; search for it before declaring the step done.
 - Change values through the skill, never by editing between the README markers: the next run replaces everything inside them.

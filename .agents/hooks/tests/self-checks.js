@@ -51,7 +51,7 @@ function initialisationGateAnswersEveryState(t) {
     const init = require("../../../scripts/check-initialised");
     const full = ["# Project memory", "", "- **Name:** Acme Billing", "- **Purpose:** Invoices customers monthly.",
         "- **Requirements:** jira:AB-1", "- **Unit type:** service", "- **Language:** C#",
-        "- **Runtime / package manager:** .NET 9 / NuGet", "- **Jira:** https://acme.atlassian.net, project `AB`", ""].join("\n");
+        "- **Runtime / package manager:** .NET 9 / NuGet", "- **Issue tracker:** Jira at https://acme.atlassian.net, project `AB`", ""].join("\n");
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "init-gate-"));
     const write = (name, text) => { fs.writeFileSync(path.join(dir, name), text); };
     const clear = () => { for (const f of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, f)); };
@@ -69,7 +69,7 @@ function initialisationGateAnswersEveryState(t) {
         write("MEMORY.md", full.split("\n").filter(l => !l.includes("Runtime")).join("\n"));
         t.ok(!init.check(dir).ok, "a missing stack line is blocked", init.check(dir).reason);
 
-        write("MEMORY.md", full.split("\n").filter(l => !l.includes("Jira:")).join("\n"));
+        write("MEMORY.md", full.split("\n").filter(l => !l.includes("Issue tracker:")).join("\n"));
         t.ok(init.check(dir).ok, "a project with no issue tracker at all passes", init.check(dir).reason);
 
         write("MEMORY.md", full);
