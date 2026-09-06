@@ -21,7 +21,8 @@ const FACTS = "MEMORY.md";
 // <angle-bracket> placeholders, is not an initialised project: it is the skill half-run.
 // `Jira` is deliberately absent. An issue tracker is a choice, not a property of the code, and a
 // repo with no tracker at all is a real repo; `to-tickets` is the only skill that needs one, and it
-// can say so itself. The same goes for Figma: nothing here requires it.
+// can say so itself. The same goes for Figma: nothing here requires it. `Frontend` is absent for the
+// same reason: a service or a library has no UI, so it has no framework to name.
 const REQUIRED = ["Name", "Purpose", "Requirements", "Unit type", "Language", "Runtime / package manager"];
 
 // { ok, reason } for a repo root, so the suite can exercise every answer against a temp directory

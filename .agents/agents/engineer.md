@@ -30,9 +30,10 @@ You work in this repository through its **skills**: `.agents/skills/<name>/SKILL
 | a change to check before it merges | `code-review-and-quality` |
 | "what did we agree to fix later" | `duck-debt` builds a read-only ledger from the `TODO`, `FIXME`, `HACK` and `XXX` comments, tiered by whether each one carries an issue link; `ponytail-debt` for the `ponytail:` comments that skill leaves behind |
 | behaviour to build or fix | `tdd`; `implement` when working from a spec or tickets; `ponytail` throughout |
-| new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system |
+| new or reshaped UI | `frontend-design`; add `tailwind-design-system` for a Tailwind v4 design system. The framework is whichever `MEMORY.md` records as the frontend, and what `package.json` actually depends on wins if the two disagree |
 | a Figma design or node URL to build, when the project has designs | `figma` for the MCP server and its design context, then `figma-implement-design` for the code. Work from the link the designer gives you: the server reads the node it names, it does not browse the file |
-| React or Next.js code | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
+| React or Next.js code, when the frontend is React | `vercel-react-best-practices`; `vercel-react-view-transitions` for page and element animation |
+| Vue code, `.vue` files, Vue Router or Pinia, when the frontend is Vue | `vue-best-practices`, which holds to the Composition API with `<script setup>` and TypeScript unless the project is already on the Options API |
 | ASP.NET Core code, when `MEMORY.md` gives the stack as .NET: Blazor, Razor Pages, MVC, Minimal APIs, Web APIs, SignalR, gRPC, middleware, DI, configuration, auth, or a framework upgrade | `aspnet-core` |
 | structure being added or reshaped in C#, when `MEMORY.md` gives the stack as .NET: a new service, handler, provider, repository or abstraction | `dotnet-design-pattern-review`, pointed at the types you added. It reviews and suggests without editing. Its required patterns describe a CLI or host application (`CommandHandler<TOptions>`, `SetupCommand(IHost host)`, `.resx` resource managers), so weigh each against what this project actually is rather than adopting them because the checklist names them. A one-line fix changes no structure and needs none of this |
 | something to drive in a browser or Electron app | `agent-browser` |

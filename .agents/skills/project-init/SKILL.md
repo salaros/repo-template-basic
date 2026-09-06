@@ -22,6 +22,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | What kind of unit is it? | Unit type | Options: `library`, `cli`, `service`, `monolith`, `frontend` |
    | Which language? | Language | One language (`C#`, `TypeScript`, `Python`) |
    | Which runtime and package manager? | Runtime / package manager | Version included (`.NET 9 / NuGet`, `Node 22 / pnpm`, `Python 3.13 / uv`) |
+   | Which frontend framework? | Frontend | Only when the project has browser code: `React`, `Vue`, or `none`. The `engineer` agent routes its framework skills on this, so a guess here sends it to the wrong ones |
    | Is there an issue tracker? | Jira site | `https://<org>.atlassian.net`, or `none`. A project can plan entirely in `docs/`, and many do before a tracker exists; take `none` at face value and skip the next question |
    | Which Jira project key? | Jira key | Only when a site was given. Upper case, as Jira shows it (`AB`); with the Atlassian MCP authorised, offer the keys `listJiraProjects` returns as options |
 
@@ -40,10 +41,11 @@ The template knows nothing about the project it hosts. This skill asks the devel
    - **Unit type:** <unit type>
    - **Language:** <language>
    - **Runtime / package manager:** <runtime>
+   - **Frontend:** <framework>
    - **Jira:** <jira site>, project `<KEY>` (conventions in `docs/agents/issue-tracker.md`)
    ```
 
-   Done when the file holds exactly these seven facts. With no tracker the last line reads `- **Jira:** none`, and work items live in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six; a tracker is a choice, not a property of the project.
+   Done when the file holds exactly these eight facts. A project with no browser code records `- **Frontend:** none`, and one with no tracker `- **Jira:** none`, its work items living in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six: a tracker is a choice rather than a property of the project, and a service or a library has no UI to have a framework for.
 
 4. **Write the `Project` section of `README.md`.** Insert it before the first `## ` heading, between the two marker comments below; on an update, replace everything between the markers. Leave the rest of the README alone.
 
@@ -58,6 +60,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | Requirements | <requirements> |
    | Unit type | <unit type> |
    | Stack | <language>, <runtime> |
+   | Frontend | <framework>, or `none` |
    | Issue tracker | Jira project `<KEY>` at <jira site> (conventions in `docs/agents/issue-tracker.md`); with no tracker, `none: work items live in docs/` |
 
    The same facts are in `MEMORY.md`, which agents read first. Re-run the `project-init` skill to change them.
