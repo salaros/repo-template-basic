@@ -1,0 +1,88 @@
+name: release
+
+# Publishes @salaros/ai-harness to npm from a version tag. No token lives in this repository: npm
+# trusted publishing exchanges this workflow's OIDC identity for short-lived credentials, and the
+# only thing anyone stores is the record on npmjs.com of which workflow it trusts. That record names
+# this file, so renaming release.yml stops publishing until the package's Trusted Publisher settings
+# name the new one.
+#
+# One-time setup on npmjs.com, under the package's Settings -> Trusted Publisher -> GitHub Actions:
+# organization or user `salaros`, repository `ai-harness`, workflow `release.yml`, no environment.
+# Until that exists the publish step fails asking to authenticate, and nothing half-published is
+# left behind.
+#
+# To cut a release: bump the version in package.json, commit it, then tag that commit and push the
+# tag. The job refuses to publish if the two disagree.
+#   git tag v0.2.2 && git push origin v0.2.2
+
+on:
+  push:
+    tags: ["v*"]
+  # Everything except the publish, so a broken release job can be found without cutting a release.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # What npm exchanges for its short-lived credentials, and what signs the provenance attestation.
+  # Trusted publishing does nothing without it, and the failure reads as an authentication problem.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      # Node 22 ships npm 10, which knows nothing about trusted publishing: it asks for a token and
+      # fails. 11.5.1 is the first release that exchanges the OIDC token itself. Held to the 11 line
+      # rather than latest, because the next major will raise the Node it needs above the 22 here.
+      - name: npm new enough to publish by OIDC
+        run: npm install -g npm@^11.5.1
+
+      # A tag push runs no other workflow, so the suite runs here. A release nobody proved is worse
+      # than a release nobody cut, and the version is on npm for good either way.
+      - name: Hook suite
+        run: node .agents/hooks/test.js
+
+      - name: Documentation chain
+        run: node scripts/docs-check.js
+
+      # The tag names the release; package.json is what npm actually publishes under. A mismatch
+      # means the bump commit and the tag disagree, and what lands on npm is not what was tagged.
+      - name: Tag matches the version in package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "tag $GITHUB_REF_NAME says $tag, package.json says $pkg"
+            exit 1
+          fi
+          echo "publishing $pkg"
+
+      # What the tarball carries is a separate question from what the repo holds: the files list in
+      # package.json is short on purpose, and one missing entry ships an installer that cannot run.
+      - name: The tarball carries the installer and its library
+        run: |
+          npm pack --dry-run --json > "$RUNNER_TEMP/pack.json"
+          node -e '
+            const files = require(process.env.RUNNER_TEMP + "/pack.json")[0].files.map(f => f.path);
+            const want = ["scripts/update-harness.js", "scripts/lib.js", "README.md", "LICENSE"];
+            const missing = want.filter(f => !files.includes(f));
+            if (missing.length) {
+              console.error("missing from the tarball: " + missing.join(", "));
+              process.exit(1);
+            }
+            console.log(files.length + " file(s): " + files.join(", "));
+          '
+
+      # Provenance comes with trusted publishing, so the published version carries a signed link back
+      # to this run and this commit.
+      - name: Publish
+        if: startsWith(github.ref, 'refs/tags/')
+        run: npm publish --access public
