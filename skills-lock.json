@@ -247,6 +247,12 @@
       "skillPath": "skills/in-progress/retro/SKILL.md",
       "computedHash": "371bfc87b0fbb221e2e802e51385b5e1461c052cfa1186b18d4b441c00383eb5"
     },
+    "roadmap-prioritization": {
+      "source": "refoundai/lenny-skills",
+      "sourceType": "github",
+      "skillPath": "skills/roadmap-prioritization/SKILL.md",
+      "computedHash": "8a3db16f28538bdd3dc73ac8949417a075e109ddbb8fa15b2f3f3064363dfae6"
+    },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",
       "sourceType": "github",
