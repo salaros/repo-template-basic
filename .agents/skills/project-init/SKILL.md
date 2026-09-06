@@ -1,6 +1,6 @@
 ---
 name: project-init
-description: Turn a repo cloned from this template into a named project. Asks the developer, through the harness's own question tool, for the project name and purpose, where the requirements live, the unit type, the stack and, if there is one, the issue tracker, and records the answers in MEMORY.md, README.md and docs/agents/issue-tracker.md. Use when a project starts, when MEMORY.md is missing, or when the stack or issue tracker changes.
+description: Turn a repo cloned from this template into a named project. Asks the developer, through the harness's own question tool, for the project name and purpose, the language its prose is written in, where the requirements live, the unit type, the stack and, if there is one, the issue tracker, and records the answers in MEMORY.md, README.md and docs/agents/issue-tracker.md. Use when a project starts, when MEMORY.md is missing, or when the stack or issue tracker changes.
 disable-model-invocation: true
 ---
 
@@ -18,6 +18,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    | --- | --- | --- |
    | What is the project called? | Name | A name usable as a heading and as a folder (`Acme Billing`) |
    | What does it do, in one sentence, for whom? | Purpose | One sentence with a subject, an outcome and a user |
+   | Which language is this project's prose written in? | Prose language | A language name (`English`, `Russian`, `Ukrainian`). It governs everything the project authors -- the `docs/` chain, `CONTEXT.md`, `TODO.md`, this file's own values and the README Project section -- and the language you answer the developer in. The harness stays English whatever the answer: `AGENTS.md`, `docs/agents/` and every `SKILL.md` are merged from upstream, so a translation is overwritten or collides |
    | Where do the requirements live? | Requirements | One or more sources, comma-separated: a repo-relative path that exists, a URL, or `jira:KEY-123`; `none yet` is allowed and means the `brd` skill runs next |
    | What kind of unit is it? | Unit type | Options: `library`, `cli`, `service`, `monolith`, `frontend` |
    | Which language? | Language | One language (`C#`, `TypeScript`, `Python`) |
@@ -37,6 +38,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
    - **Name:** <name>
    - **Purpose:** <purpose>
+   - **Prose language:** <prose language>
    - **Requirements:** <requirements>
    - **Unit type:** <unit type>
    - **Language:** <language>
@@ -45,7 +47,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
    - **Issue tracker:** <tracker> at <url>, project `<KEY>` (conventions in `docs/agents/issue-tracker.md`)
    ```
 
-   Done when the file holds exactly these eight facts. A project with no browser code records `- **Frontend:** none`, and one with no tracker `- **Issue tracker:** none`, its work items living in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six: a tracker is a choice rather than a property of the project, and a service or a library has no UI to have a framework for.
+   Done when the file holds exactly these nine facts. A project with no browser code records `- **Frontend:** none`, and one with no tracker `- **Issue tracker:** none`, its work items living in `docs/` instead. The initialisation gate (`scripts/check-initialised.js`) requires the other six: a tracker is a choice rather than a property of the project, a service or a library has no UI to have a framework for, and a missing `Prose language` already means English, so it is never the unanswered question the gate exists to catch.
 
 4. **Write the `Project` section of `README.md`.** Insert it before the first `## ` heading, between the two marker comments below; on an update, replace everything between the markers. Leave the rest of the README alone.
 
@@ -57,6 +59,7 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
    | Fact | Value |
    | --- | --- |
+   | Prose language | <prose language> |
    | Requirements | <requirements> |
    | Unit type | <unit type> |
    | Stack | <language>, <runtime> |
@@ -101,11 +104,12 @@ The template knows nothing about the project it hosts. This skill asks the devel
 
 ## Report
 
-The seven facts recorded, which files changed, the scaffold commands handed over, and the next skill to run.
+The nine facts recorded, which files changed, the scaffold commands handed over, and the next skill to run.
 
 ## Gotchas
 
-- Ask one question per turn: a single message with eight questions gets eight half-answers.
+- Ask one question per turn: a single message with nine questions gets nine half-answers.
+- `Language` is the programming language and `Prose language` the one people read; a project can be `C#` and `Russian` at once. Writing the prose answer into `Language` sends every stack-gated skill after a language no compiler knows.
 - `Requirements` is checked by `node scripts/docs-check.js`, so a Confluence page goes in as its URL and an epic as `jira:AB-42`, not as prose. List several by separating them with commas. Once a BRD exists the line names the BRD instead, and the `brd` skill makes that swap.
 - A tracker is optional. `none` is a complete answer, and a project that plans in `docs/` needs nothing else; do not talk anyone into a tracker they do not have. The template ships that file configured for Jira; for Linear, Asana or GitHub Issues, rewrite it for that tracker's own tools and set `Key format:` so the `commit-msg` hook warns about the right shape. Figma is the same: the `figma` skills matter only once designs exist.
 - When there is a key, it is upper case and the site a full URL; a lower-case key or a bare host name silently breaks the JQL in `issue-tracker.md`.

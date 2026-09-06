@@ -192,6 +192,7 @@ const SKELETONS = {
         "",
         "- **Name:** <name>",
         "- **Purpose:** <purpose>",
+        "- **Prose language:** <prose language>",
         "- **Requirements:** <requirements>",
         "- **Unit type:** <unit type>",
         "- **Language:** <language>",
