@@ -1,0 +1,114 @@
+name: skills-update
+
+# Pulls upstream skill changes in once a week, commits them to development, and opens a pull request
+# proposing development to master. Skills are prompts an agent runs with full permissions, so the
+# promotion to the stable branch wants a reader; development is where they land first.
+#
+# The order of the steps is the point. `npx skills update` rewrites skills-lock.json and recreates
+# the per-harness links absolute, so relink runs next and puts them back to relative -- committing an
+# absolute link, or a skill directory in place of a link, breaks every other clone. The notice is
+# regenerated after that, because an update can bring in a skill from an upstream nobody has vendored
+# before. When it does, `notices` exits 1 and this job stops: the licence of a new upstream is a
+# judgement no script should make, so a human adds the row to scripts/skill-licences.tsv. The suite
+# and the chain check run last, over the updated tree, and a failure there means nothing is committed.
+#
+# The push uses GITHUB_TOKEN, so it does not retrigger harness.yml. That is why the suite runs here.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"      # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  WORKING: development
+  STABLE: master
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Update vendored skills
+        run: npx --yes skills@latest update
+
+      - name: Relink (npx skills recreates links absolute)
+        run: node scripts/skills.js relink
+
+      - name: Regenerate third-party notices
+        run: node scripts/skills.js notices
+
+      - name: Hook suite
+        run: node .agents/hooks/test.js
+
+      - name: Documentation chain
+        run: node scripts/docs-check.js
+
+      - name: What changed
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No upstream changes." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Commit to ${{ env.WORKING }}
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -F - <<'MSG'
+          chore(skills): update vendored skills to their latest upstream
+
+          Opened by .github/workflows/skills-update.yml. The hook suite and the
+          documentation chain both passed against this tree, and the third-party
+          notice was regenerated from the lock file.
+
+          Skills are prompts that run with full agent permissions: read the diff of
+          every SKILL.md before promoting this, not just the lock file.
+          MSG
+          git push origin "$WORKING"
+
+      # Proposes the working branch for promotion. Reuses the open pull request when there is one,
+      # since a weekly job would otherwise fail every week after the first.
+      - name: Propose ${{ env.WORKING }} for ${{ env.STABLE }}
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! git ls-remote --exit-code --heads origin "$STABLE" >/dev/null 2>&1; then
+            echo "::warning::No $STABLE branch on the remote, so there is nothing to open a pull request against. The update is committed to $WORKING."
+            exit 0
+          fi
+          open=$(gh pr list --base "$STABLE" --head "$WORKING" --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            echo "Pull request #$open already proposes $WORKING for $STABLE; the new commit is on it." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh pr create --base "$STABLE" --head "$WORKING" \
+            --title "chore(skills): promote updated skills to $STABLE" \
+            --body "$(cat <<'BODY'
+          Weekly run of `npx skills update`, then `relink`, then `skills.js notices`, committed to `development`.
+
+          The hook suite and `docs-check` passed against this tree.
+
+          **Read the `SKILL.md` diffs before merging.** Skills are prompts that run with full agent permissions, and a lock-file bump can carry any change to what an agent will do. `THIRD-PARTY-NOTICES.md` in this diff shows whether an upstream changed its terms, and a new upstream would have stopped this job rather than reaching here.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          BODY
+          )"

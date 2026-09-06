@@ -2,7 +2,7 @@
 
 A starting point that does not assume a language or framework: `.gitignore`, `.gitattributes`, Git hooks, a folder layout with a README in every folder, and an AI-agnostic **agent harness** (skills, hook scripts, four agents) that works the same in Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and any other tool that reads `AGENTS.md` and `.agents/skills`.
 
-Requires **Node 18 or newer** (the only runtime the harness needs) and Git; nothing else. The [harness CI workflow](.github/workflows/harness.yml) runs the suite on Ubuntu and Windows.
+Requires **Node 18 or newer** (the only runtime the harness needs) and Git; nothing else. The [harness CI workflow](.github/workflows/harness.yml) runs the suite on Ubuntu and Windows. A second workflow, [skills-update](.github/workflows/skills-update.yml), runs `npx skills update` weekly, relinks, regenerates the third-party notice, and commits the result to `development` only if the suite and the chain check still pass; it then opens a pull request promoting `development` to `master`, because a skill is a prompt an agent runs with full permissions and its diff wants a reader.
 
 ## Getting started
 

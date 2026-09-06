@@ -9,8 +9,11 @@ name: harness
 # stack, so this workflow needs no changes when a stack lands in src/.
 
 on:
+  # The three names a default branch goes by, rather than the one this repo happens to use: a rename
+  # or a clone that starts from `main` would otherwise leave this workflow running on nothing, which
+  # looks exactly like a workflow that passes.
   push:
-    branches: [master]
+    branches: [main, master, development]
   pull_request:
   workflow_dispatch:
 
