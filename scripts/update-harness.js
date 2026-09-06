@@ -23,7 +23,7 @@
 //   node scripts/update-harness.js --astro-docs        add tools/docs-site, the Astro renderer for the chain
 //   node scripts/update-harness.js --no-check          install without proving it afterwards
 //   node scripts/update-harness.js --quiet             the summary alone, no line per path
-//   node scripts/update-harness.js --adopt             replace a harness that predates harness-lock.json
+//   node scripts/update-harness.js --adopt             take every harness file from the upstream, losing local edits
 // Installing into a repo that has no harness yet, from anywhere:
 //   git clone https://github.com/salaros/ai-harness .harness && \
 //     node .harness/scripts/update-harness.js --from .harness --target . && rm -rf .harness
@@ -31,6 +31,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const lib = require("./lib");
+const { spawnSync } = require("child_process");
 
 const TEMPLATE = "https://github.com/salaros/ai-harness.git";
 const LOCK = "harness-lock.json";
@@ -74,7 +75,7 @@ function templateCheckout(ref) {
     }
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-"));
     say(`cloning ${TEMPLATE} at ${ref}`);
-    const r = lib.run("git", ["clone", "--quiet", "--branch", ref, TEMPLATE, dir]);
+    const r = lib.run("git", [...GIT, "clone", "--quiet", "--branch", ref, TEMPLATE, dir]);
     if (r.status !== 0) fail(`could not clone the upstream at ${ref}\n${r.output}`);
     if (!usable(dir)) {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -96,13 +97,86 @@ function installer() {
     } catch { return {}; }
 }
 
-const at = (dir, args) => lib.run("git", ["-C", dir, ...args]);
+// Windows stops at 260 characters for a path, and the harness ships skill files nested deep enough
+// that a project a few folders down the drive crosses it. Git then fails to stat the working copy
+// while resolving <commit>:<path>, so `git show` says the file is not there and the installer skips
+// it -- a skill missing seven of its reference files, and not a word said about it. Setting
+// core.longpaths on every call is what makes those paths reachable, and it costs nothing anywhere
+// else.
+const GIT = ["-c", "core.longpaths=true"];
+const at = (dir, args) => lib.run("git", [...GIT, "-C", dir, ...args]);
 
 // The upstream's version of a path at a commit, or null when the file did not exist there. Also how
 // a missing base is detected: a rewritten history no longer holds the recorded commit.
+// Read raw rather than through lib.run, which trims trailing whitespace: that is right for the
+// plumbing whose output is a hash or a status line, and wrong for a file. Trimmed, every installed
+// file lost its final newline, no copy was ever byte-identical to the upstream, and so every later
+// run re-merged files nobody had touched.
+// Text comes back as a string and anything holding a NUL byte as the Buffer it arrived in, which is
+// how Git itself tells the two apart. Decoded as UTF-8 and written back, every byte a PNG holds
+// outside ASCII becomes U+FFFD: the skill's logo installs as a broken image, and no later run ever
+// agrees with the upstream about it. Nothing merges a Buffer; it is written whole or kept whole.
 function blob(dir, commit, file) {
-    const r = at(dir, ["show", `${commit}:${file}`]);
-    return r.status === 0 ? r.output : null;
+    const r = spawnSync("git", [...GIT, "-C", dir, "show", `${commit}:${file}`], { maxBuffer: 256 * 1024 * 1024 });
+    if (r.status !== 0) return null;
+    return r.stdout.includes(0) ? r.stdout : r.stdout.toString("utf8");
+}
+
+// One test for both, so a caller comparing what blob returned against what is on disk does not have
+// to know which it got.
+const same = (a, b) => Buffer.isBuffer(a) || Buffer.isBuffer(b)
+    ? Buffer.isBuffer(a) && Buffer.isBuffer(b) && a.equals(b)
+    : a === b;
+
+// The receipt is missing, so the base is found instead: the upstream version this copy is closest to
+// is where the project forked from, whatever a receipt would have said. An exact match is the clean
+// case, an older copy nobody touched; a project that has since edited its own file matches nothing
+// exactly, so the nearest version by shared lines stands in as the base. That turns a first install
+// into a real three-way merge for the files that need one, rather than one whole-file conflict.
+// Only reconcile-policy files pay for the search: one git log, then a blob read per commit that
+// touched the path.
+// Under half the lines in common is a different file, not an older one, and merging against it would
+// invent a diff the project never made.
+const NEAREST = 0.5;
+function recoverBase(dir, file, ours) {
+    const r = at(dir, ["log", "--format=%H", "--", file]);
+    if (r.status !== 0) return null;
+    const want = lineCounts(ours);
+    let best = null;
+    let nearest = NEAREST;
+    // Oldest first, and a tie goes to the first seen: two upstream versions one line apart score the
+    // same against a copy that has neither, and the older of them is the one whose merge puts that
+    // line back. The newer would drop it silently, which is the failure this policy exists to stop.
+    for (const commit of r.output.split(/\r?\n/).filter(Boolean).reverse()) {
+        const text = blob(dir, commit, file);
+        if (typeof text !== "string") continue;
+        if (text === ours) return text;
+        const shared = overlap(want, lineCounts(text));
+        if (shared > nearest) { best = text; nearest = shared; }
+    }
+    return best;
+}
+
+// Lines to counts, blank ones left out: they carry no content and every version of a markdown file
+// has plenty, so counting them would score two unrelated documents as half the same.
+function lineCounts(text) {
+    const counts = new Map();
+    for (const line of text.split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        counts.set(line, (counts.get(line) || 0) + 1);
+    }
+    return counts;
+}
+
+// The share of the longer file the two have in common, so neither a version that added a section nor
+// one that cut it scores as a perfect match.
+function overlap(ours, theirs) {
+    let shared = 0;
+    let mine = 0;
+    for (const [line, n] of ours) { mine += n; shared += Math.min(n, theirs.get(line) || 0); }
+    let other = 0;
+    for (const n of theirs.values()) other += n;
+    return shared / Math.max(mine, other, 1);
 }
 
 // ---------------------------------------------------------------- the manifest
@@ -143,7 +217,7 @@ function templateFiles(dir) {
 // install stages these few files rather than leaving them for the project's own `git add`.
 function carryMode(target, file) {
     try { fs.chmodSync(path.join(target, file), 0o755); } catch { /* the filesystem does not do modes */ }
-    const r = lib.run("git", ["-C", target, "add", "--chmod=+x", "--", file]);
+    const r = lib.run("git", [...GIT, "-C", target, "add", "--chmod=+x", "--", file]);
     if (r.status !== 0) say(`could not mark ${file} executable: ${r.output}`);
 }
 
@@ -244,7 +318,7 @@ function threeWay(base, ours, theirs) {
 
 // ---------------------------------------------------------------- reporting
 
-const notes = { written: [], merged: [], conflicted: [], seeded: [], kept: [], skipped: [], template: [], check: null };
+const notes = { written: [], merged: [], conflicted: [], seeded: [], kept: [], skipped: [], template: [], unreadable: [], check: null };
 const say = m => console.log(m);
 function fail(m) { console.error(`update-harness: ${m}`); process.exit(1); }
 
@@ -260,6 +334,20 @@ function step(policy, m, outcome, file, bucket) {
     if (!quiet) say(`  ${policy.padEnd(9)}${m}  ${outcome.padEnd(12)}${file}`);
 }
 const phase = m => { if (!quiet) say(`\n${m}`); };
+
+// Git checks a repo out with the platform's line endings, so a Windows working copy holds CRLF where
+// the upstream stores LF. Compared raw, every line of every file reads as changed: a copy nobody
+// touched reports as edited, and a real edit is buried in a whole-file conflict nobody can read. So
+// the comparison and the merge happen in LF, and the result is written back in the endings the file
+// already had.
+const CRLF = /\r\n/g;
+const LF = /\n/g;
+// This script's own conflict label, on a line of its own, so prose about conflict markers is not
+// mistaken for one.
+const MARKED = /^<{7} yours\r?$/m;
+const isCrlf = text => (text.match(CRLF) || []).length * 2 > (text.match(LF) || []).length;
+const toLf = text => text.replace(CRLF, "\n");
+const asFound = (text, crlf) => crlf ? text.replace(LF, "\r\n") : text;
 
 function write(target, file, text, exec) {
     const full = path.join(target, file);
@@ -332,7 +420,12 @@ function main() {
             say(`the recorded upstream commit ${base.slice(0, 8)} is not in ${TEMPLATE} any more, so this run has no merge base: existing files are left alone`);
             base = null;
         }
-        if (previous && base === head) { say(`harness is already at ${head.slice(0, 8)} (${ref}); nothing to update`); return; }
+        // --adopt is how a repo whose harness files are wrong gets them replaced, and the commonest
+        // way to reach that state is an install that wrote the receipt and kept a stale harness. So
+        // the run has to stay open at the recorded commit: short-circuiting here would answer the
+        // one command that fixes it with "nothing to update".
+        if (previous && base === head && !adopt) { say(`harness is already at ${head.slice(0, 8)} (${ref}); nothing to update`); return; }
+        if (previous && base === head) say(`harness is already at ${head.slice(0, 8)} (${ref}); --adopt takes every harness file again anyway`);
 
         // A repo carrying a harness from before harness-lock.json existed. Without a base the rule
         // below keeps every file that is already there, which protects the project's work and also
@@ -356,9 +449,18 @@ function main() {
             const policy = policyFor(rows, file);
             const m = mode(entry);
             const theirs = blob(templateDir, head, file);
-            if (theirs === null) continue;
+            // Git listed the path a moment ago, so failing to read it is the checkout being unhappy
+            // rather than the file being absent. Said out loud: skipped quietly, the run reports a
+            // clean install of a harness missing whichever files the reader was never told about.
+            if (theirs === null) { step(policy, m, "UNREADABLE", file, "unreadable"); continue; }
             const full = path.join(target, file);
             const exists = fs.existsSync(full);
+
+            // The executable bit is not the project's content, so a file kept for its content still
+            // has its mode corrected. Git runs a hook only if it is executable and says nothing when
+            // it is not, so a hook kept at 100644 by an install that had no merge base looks
+            // installed and gates nothing at all -- the failure this whole column exists to catch.
+            if (exec && exists && !dryRun) carryMode(target, file);
 
             // Not installed anywhere, and named in one line of the summary instead: sixty-five
             // lines saying nothing happened bury the thirty-eight saying something did.
@@ -389,22 +491,54 @@ function main() {
             }
             // merge
             if (!exists) { write(target, file, theirs, exec); step(policy, m, "written", file, "written"); continue; }
-            const ours = fs.readFileSync(full, "utf8");
-            if (ours === theirs) { step(policy, m, "unchanged", file); continue; }
-            if (base === null) {
-                if (!adopt) { step(policy, m, "yours, no base", file, "kept"); continue; }
-                write(target, file, theirs, exec);
-                step(policy, m, "adopted", file, "written");
+            // Binary: there are no lines to merge, so it is the upstream's copy or it is the
+            // project's, and the base decides which. A logo the project replaced stays replaced.
+            if (Buffer.isBuffer(theirs)) {
+                const held = fs.readFileSync(full);
+                if (same(held, theirs)) { step(policy, m, "unchanged", file); continue; }
+                const was = base === null ? null : blob(templateDir, base, file);
+                if (adopt || same(held, was)) {
+                    write(target, file, theirs, exec);
+                    step(policy, m, adopt ? "adopted" : "written", file, "written");
+                } else step(policy, m, base === null ? "yours, no base" : "yours, binary", file, "kept");
                 continue;
             }
-            const from = blob(templateDir, base, file);
-            if (from === null) { step(policy, m, "yours, new here", file, "kept"); continue; }
-            if (ours === from) { write(target, file, theirs, exec); step(policy, m, "written", file, "written"); continue; }
+            const raw = fs.readFileSync(full, "utf8");
+            const crlf = isCrlf(raw);
+            const ours = toLf(raw);
+            if (ours === theirs) { step(policy, m, "unchanged", file); continue; }
+            // Before the base logic, not inside it: a repo that needs adopting usually has a
+            // receipt already, written by the install that kept the stale files in the first place.
+            if (adopt) { write(target, file, asFound(theirs, crlf), exec); step(policy, m, "adopted", file, "written"); continue; }
+            // Markers an earlier run wrote and nobody resolved. Left to the merge, the marked-up file
+            // is now its own nearest base, so the merge takes it whole, the run says "unchanged" and
+            // a half-merged harness passes as settled. Named instead, and the run exits 1 until
+            // someone resolves it or --adopt above throws it away.
+            if (MARKED.test(ours)) { step(policy, m, "STILL OPEN", file, "conflicted"); continue; }
+            // A reconcile file is one the harness cannot work around: AGENTS.md is the map every
+            // agent reads and holds the table docs-check parses, and docs/README.md says what the
+            // chain puts where. Keeping a stale one leaves a repo that looks installed and behaves
+            // like the version it came from, so these are merged even when the receipt is missing.
+            let from = base === null ? null : blob(templateDir, base, file);
+            if (from === null && policy === "reconcile") from = recoverBase(templateDir, file, ours);
+            if (from === null && policy === "reconcile") {
+                // Nothing in the upstream's history matches, so this copy was written by hand. An
+                // empty base makes the whole file one conflict, which is the honest answer: both
+                // versions are there to read, and the run exits 1 rather than pretending.
+                from = "";
+            }
+            if (from === null) { step(policy, m, base === null ? "yours, no base" : "yours, new here", file, "kept"); continue; }
+            if (ours === from) { write(target, file, asFound(theirs, crlf), exec); step(policy, m, "written", file, "written"); continue; }
             const merged = threeWay(from, ours, theirs);
             if (merged.failed) { step(policy, m, "yours, merge failed", file, "kept"); continue; }
-            write(target, file, merged.text, exec);
-            if (merged.conflicts) step(policy, m, "CONFLICT", file, "conflicted");
-            else step(policy, m, "merged", file, "merged");
+            const result = asFound(merged.text, crlf);
+            if (merged.conflicts) { write(target, file, result, exec); step(policy, m, "CONFLICT", file, "conflicted"); continue; }
+            // A file that keeps a local edit merges cleanly on every later run and comes out the same
+            // every time. Reported as merged each run it reads as churn, and the reader goes looking
+            // for a change nobody made, so what the run did is decided by the result, not the route.
+            if (result === raw) { step(policy, m, "unchanged", file); continue; }
+            write(target, file, result, exec);
+            step(policy, m, "merged", file, "merged");
         }
 
         phase("skeletons a project starts with");
@@ -453,8 +587,17 @@ function mergeSkills(target, templateDir, head, files) {
         if (text === null) continue;
         const full = path.join(target, file);
         const exists = fs.existsSync(full);
-        if (exists && fs.readFileSync(full, "utf8") === text) continue;
-        write(target, file, text);
+        // A vendored file the project has not touched still differs byte-for-byte on Windows, where
+        // Git checked it out with CRLF. Compared raw, every skill would report as updated every run.
+        const held = exists ? fs.readFileSync(full) : null;
+        if (Buffer.isBuffer(text)) {
+            if (same(held, text)) continue;
+            write(target, file, text);
+        } else {
+            const ourText = held === null ? null : held.toString("utf8");
+            if (ourText !== null && toLf(ourText) === text) continue;
+            write(target, file, asFound(text, ourText !== null && isCrlf(ourText)));
+        }
         if (exists) { tally.updated++; notes.merged.push(file); }
         else { tally.added++; notes.written.push(file); }
     }
@@ -502,6 +645,12 @@ function report(target, head, ref, base) {
         const named = notes.template.filter(f => !f.startsWith(".agents/hooks/tests/"));
         say(`\nnot installed, the upstream's own (${notes.template.length}): ${named.join(", ")}, and the suite's fixtures`);
     }
+    // Listed whatever the verbosity, like a conflict: a file the upstream ships and this run could
+    // not read is missing from the install, and the reader is the only one who can say why.
+    if (notes.unreadable.length) {
+        list("UNREADABLE in the upstream checkout, so not installed", notes.unreadable, true);
+        say(`\nGit could not read these out of the upstream checkout. On Windows a path over 260 characters is\nthe usual cause: install into a shorter path, or set core.longpaths=true globally.`);
+    }
     if (notes.conflicted.length) {
         list("CONFLICTED, resolve the markers by hand", notes.conflicted, true);
         say(`\nEach one holds <<<<<<< yours / ======= / >>>>>>> upstream (new). Resolve them, then run the suite:\n  node .agents/hooks/test.js`);
@@ -516,7 +665,7 @@ function report(target, head, ref, base) {
         say(`\nIn ${target}, point Git at the hooks once per clone:`);
         say(`  node scripts/githooks-init.js${suite ? " && node .agents/hooks/test.js" : " && node scripts/docs-check.js"}`);
     }
-    if (notes.conflicted.length || (check && check.failed)) process.exit(1);
+    if (notes.conflicted.length || notes.unreadable.length || (check && check.failed)) process.exit(1);
 }
 
 main();

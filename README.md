@@ -24,9 +24,13 @@ Every run proves itself before it finishes. Merging is not checking: the install
 
 Running it again updates. The first run writes `harness-lock.json` naming the upstream commit it took, which gives a later run a merge base: a harness file nobody edited takes the new version, an edited one keeps its edits and gains the changes around them, and only a real collision is written with conflict markers, reported, and exits non-zero. That is how `AGENTS.md` gains a new section while keeping your own rules, and how `docs/agents/issue-tracker.md` keeps your project key.
 
+Two files are merged even on a first install, where there is no receipt to take a base from: `AGENTS.md`, the map every agent reads and the table `docs-check` parses, and `docs/README.md`, which says what the chain puts where. Keeping a stale copy of either leaves a repo that looks installed and behaves like the version it came from, so the installer finds the base instead — the upstream version yours is closest to is where you forked from, whatever a receipt would have said. A copy nobody edited merges cleanly; an edited one keeps its edits and gains the rest. A file written from scratch matches nothing in the upstream's history and is written with conflict markers, so both versions are there to read.
+
 Skills are added and updated, never removed: one you vendored yourself survives every update, and `skills-lock.json` is merged as a union.
 
 A repo whose harness predates `harness-lock.json` is the one case where "never touch what is already there" works against you: with no receipt there is no merge base, so the old harness stays and its checks then run against the new skills and fail, naming rules this version dropped. The run says so and names `--adopt`, which replaces every harness file with the upstream's — hooks, agents, scripts, `AGENTS.md`, and a `.claude/agents` that checked out as a text file rather than a symlink. It stays opt-in because it discards your edits to those files. `--dry-run --quiet` lists them first.
+
+That first install writes a receipt even though it kept the old files, so `--adopt` has to keep working afterwards — it is normally the self check that tells you the harness is stale, and by then the receipt exists. A run at the recorded commit says so and takes every harness file again, rather than answering the one command that fixes it with "nothing to update".
 
 The run reports each path as it works on it: the policy, the mode Git records, what happened, and the path, with the skills tree collapsed to one line per skill. `--quiet` gives the summary alone.
 
